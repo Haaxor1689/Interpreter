@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.2)
+
+project(Interpreter)
+
+# Configure compiler flags for our project
+if (CMAKE_CXX_COMPILER_ID MATCHES Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+  # using regular Clang or AppleClang or GCC
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -pedantic -Wold-style-cast -lstdc++fs")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+  # using Visual Studio C++
+  set(CMAKE_CXX_FLAGS "/std:c++1z /permissive- /W4 /EHsc")
+endif()
+
+# Copying of resources to outpud directories
+file(GLOB RESOURCES ${CMAKE_SOURCE_DIR}/examples/*.ct)
+file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/examples)
+
+# Add executable
+add_executable(Main Main.cpp)
+add_executable(Test Tests.cpp)
