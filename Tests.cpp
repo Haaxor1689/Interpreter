@@ -129,6 +129,62 @@ TEST_CASE("Lexer") {
         CHECK(tokens[7] == Token(")", Token::Type::ParenClose, 3));
         CHECK(tokens[10] == Token("(", Token::Type::ParenOpen, 3));
     }
+
+    SECTION("Keywords") {
+        cout << "\nKeywords\n";
+        Lexer lexer("examples/LexerKeywords.ct");
+        auto tokens = GetTokens(lexer);
+        PrintTokens(tokens);
+        REQUIRE(tokens.size() == 13);
+        CHECK(tokens[0] == Token("for", Token::Type::For, 2));
+        CHECK(tokens[1] == Token("+", Token::Type::BinaryOperator, 2));
+        CHECK(tokens[2] == Token("foodo", Token::Type::Identifier, 2));
+        CHECK(tokens[3] == Token("(", Token::Type::ParenOpen, 2));
+        CHECK(tokens[4] == Token("iffor", Token::Type::Identifier, 2));
+        CHECK(tokens[5] == Token(")", Token::Type::ParenClose, 2));
+        CHECK(tokens[6] == Token("0", Token::Type::Number, 3));
+        CHECK(tokens[7] == Token("+", Token::Type::BinaryOperator, 3));
+        CHECK(tokens[8] == Token("if", Token::Type::If, 3));
+        CHECK(tokens[9] == Token(".", Token::Type::BinaryOperator, 3));
+        CHECK(tokens[10] == Token("0.1", Token::Type::Number, 3));
+        CHECK(tokens[11] == Token("func", Token::Type::Func, 3));
+    }
+
+    SECTION("More keywords on complex example") {
+        cout << "\nMore keywords on complex example\n";
+        Lexer lexer("examples/LexerComplex.ct");
+        auto tokens = GetTokens(lexer);
+        PrintTokens(tokens);
+        REQUIRE(tokens.size() == 42);
+        CHECK(tokens[0] == Token("func", Token::Type::Func, 4));
+        CHECK(tokens[1] == Token("goo", Token::Type::Identifier, 4));
+        CHECK(tokens[2] == Token("(", Token::Type::ParenOpen, 4));
+        CHECK(tokens[3] == Token("_", Token::Type::Identifier, 4));
+        CHECK(tokens[4] == Token("bar", Token::Type::Identifier, 4));
+        CHECK(tokens[5] == Token(":", Token::Type::Colon, 4));
+        CHECK(tokens[6] == Token("string", Token::Type::Identifier, 4));
+        CHECK(tokens[7] == Token(",", Token::Type::Comma, 4));
+        CHECK(tokens[11] == Token(")", Token::Type::ParenClose, 4));
+        CHECK(tokens[12] == Token("->", Token::Type::BinaryOperator, 4));
+        CHECK(tokens[13] == Token("bool", Token::Type::Identifier, 4));
+        CHECK(tokens[14] == Token("{", Token::Type::CurlyOpen, 4));
+        CHECK(tokens[15] == Token("var", Token::Type::Var, 5));
+        CHECK(tokens[16] == Token("f", Token::Type::Identifier, 5));
+        CHECK(tokens[17] == Token("=", Token::Type::BinaryOperator, 5));
+        CHECK(tokens[18] == Token("null", Token::Type::Null, 5));
+        CHECK(tokens[19] == Token(";", Token::Type::Semicolon, 5));
+        CHECK(tokens[20] == Token("return", Token::Type::Return, 5));
+        CHECK(tokens[21] == Token("true", Token::Type::True, 5));
+        CHECK(tokens[23] == Token("for", Token::Type::For, 7));
+        CHECK(tokens[24] == Token("i", Token::Type::Identifier, 7));
+        CHECK(tokens[25] == Token("in", Token::Type::In, 7));
+        CHECK(tokens[26] == Token("0", Token::Type::Number, 7));
+        CHECK(tokens[27] == Token("..<", Token::Type::BinaryOperator, 7));
+        CHECK(tokens[28] == Token("string01", Token::Type::Identifier, 7));
+        CHECK(tokens[30] == Token("size", Token::Type::Identifier, 7));
+        CHECK(tokens[33] == Token("[", Token::Type::SquareOpen, 8));
+        CHECK(tokens[38] == Token(".", Token::Type::BinaryOperator, 8));
+    }
 }
 
 TEST_CASE("Parser") {

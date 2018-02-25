@@ -7,7 +7,9 @@ struct Token {
     enum Type {
         Identifier, String, Number, UnaryOperator, BinaryOperator,
         ParenOpen, ParenClose, SquareOpen, SquareClose, CurlyOpen, CurlyClose,
-        If, Elseif, Else, For, Do, While,
+        If, Elseif, Else, For, Do, While, Return, Func, In,
+        Null, Var, True, False,
+        Colon, Semicolon, Comma,
         EoF, Invalid
     };
 
@@ -38,6 +40,9 @@ struct Token {
             case Token::Type::SquareClose:
             case Token::Type::CurlyOpen:
             case Token::Type::CurlyClose: return "Bracket";
+            case Token::Type::Colon:
+            case Token::Type::Semicolon:
+            case Token::Type::Comma: return "Special Token";
             case Token::Type::EoF: return "EoF";
             case Token::Type::Invalid: return "Invalid Token";
             default: return "Keyword";

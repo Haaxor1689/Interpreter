@@ -25,7 +25,6 @@ class Lexer {
         std::make_pair("!", Token::Type::UnaryOperator),
         std::make_pair("?", Token::Type::UnaryOperator),
         std::make_pair(".", Token::Type::BinaryOperator),
-        std::make_pair(":", Token::Type::BinaryOperator),
         std::make_pair("|", Token::Type::BinaryOperator),
         std::make_pair("&", Token::Type::BinaryOperator),
         std::make_pair("++", Token::Type::UnaryOperator),
@@ -41,14 +40,31 @@ class Lexer {
         std::make_pair(">=", Token::Type::BinaryOperator),
         std::make_pair("..", Token::Type::BinaryOperator),
         std::make_pair("...", Token::Type::BinaryOperator),
-        std::make_pair("..>", Token::Type::BinaryOperator) };
-    const std::map<char, Token::Type> brackets = {
+        std::make_pair("..<", Token::Type::BinaryOperator) };
+    const std::map<char, Token::Type> special = {
         std::make_pair('(', Token::Type::ParenOpen),
         std::make_pair(')', Token::Type::ParenClose),
         std::make_pair('[', Token::Type::SquareOpen),
         std::make_pair(']', Token::Type::SquareClose),
         std::make_pair('{', Token::Type::CurlyOpen),
-        std::make_pair('}', Token::Type::CurlyClose) };
+        std::make_pair('}', Token::Type::CurlyClose),
+        std::make_pair(':', Token::Type::Colon),
+        std::make_pair(';', Token::Type::Semicolon),
+        std::make_pair(',', Token::Type::Comma) };
+    const std::map<std::string, Token::Type> keywords = {
+        std::make_pair("if", Token::Type::If),
+        std::make_pair("elseif", Token::Type::Elseif),
+        std::make_pair("else", Token::Type::Else),
+        std::make_pair("for", Token::Type::For),
+        std::make_pair("do", Token::Type::Do),
+        std::make_pair("while", Token::Type::While),
+        std::make_pair("return", Token::Type::Return),
+        std::make_pair("func", Token::Type::Func),
+        std::make_pair("in", Token::Type::In),
+        std::make_pair("null", Token::Type::Null),
+        std::make_pair("var", Token::Type::Var),
+        std::make_pair("true", Token::Type::True),
+        std::make_pair("false", Token::Type::False) };
 
 public:
     Lexer(const std::filesystem::path& path) : source(path), current(source.get()) {}
@@ -70,7 +86,7 @@ public:
         if (IsOperator(current))
             return Operator();
 
-        if (auto it = brackets.find(current); it != brackets.end()) {
+        if (auto it = special.find(current); it != special.end()) {
             current = source.get();
             return Token(std::string(1, it->first), it->second, line);
         }
@@ -81,7 +97,7 @@ public:
 private:
     void RemoveWhitespace() {
         bool isComment = current == '#';
-        while (std::isspace(current) || isComment) {
+        while (std::isspace(current) || current == '#' || isComment) {
             if (current == '\n') {
                 ++line;
                 isComment = false;
@@ -102,6 +118,10 @@ private:
         do {
             buffer += current;
         } while (IsIdentifier(current = source.get()));
+
+        if (auto it = keywords.find(buffer); it != keywords.end())
+            return PopToken(it->second);
+
         return PopToken(Token::Type::Identifier);
     }
 

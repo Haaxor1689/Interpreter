@@ -1,17 +1,9 @@
 # Complex example
-int string01 = "123"
-if string01 == "123" then
-    print(true)
-else   
-    print(false)
-end
 
-string01[0] = "0"
-
-for character in string01 do
-    character = "3"
-end
-
-for i from 0 to string01.size do
+# Comment
+func goo(_ bar: string, boo: int) -> bool {
+    var f = null; return true # for
+} # Another comment
+for i in 0 ..< string01.size {
     string01[i] = i.string
-end
+}
