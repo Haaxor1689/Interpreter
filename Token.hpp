@@ -15,7 +15,11 @@ struct Token {
     Token(std::string text, Type type, unsigned line) : text(text), type(type), line(line) {}
 
     friend std::ostream& operator<<(std::ostream& os, const Token& token) {
-        return os << token.text << "(" << token.TypeString() << ", line " << token.line << ")";
+        return os << "[" << token.TypeString() << " " << token.text << " on line " << token.line << "]";
+    }
+
+    bool operator==(const Token& other) const {
+        return text == other.text && type == other.type && line == other.line;
     }
 
     std::string TypeString() const {
