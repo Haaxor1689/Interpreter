@@ -1,6 +1,6 @@
 # Complex example
 int string01 = "123"
-if ==(string01, "123") then
+if string01 == "123" then
     print(true)
 else   
     print(false)
