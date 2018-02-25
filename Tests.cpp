@@ -103,6 +103,32 @@ TEST_CASE("Lexer") {
         CHECK(tokens[15] == Token("*|", Token::Type::Invalid, 7));
         CHECK(tokens[16] == Token("?", Token::Type::UnaryOperator, 7));
     }
+
+    SECTION("Invalid number tokens") {
+        cout << "\nInvalid number tokens\n";
+        Lexer lexer("examples/LexerInvalidNumber.ct");
+        auto tokens = GetTokens(lexer);
+        PrintTokens(tokens);
+        REQUIRE(tokens.size() == 6);
+        CHECK(tokens[0] == Token("0...", Token::Type::Invalid, 2));
+        CHECK(tokens[1] == Token("1.2.3", Token::Type::Invalid, 3));
+        CHECK(tokens[2] == Token("4.", Token::Type::Invalid, 4));
+        CHECK(tokens[3] == Token(".", Token::Type::BinaryOperator, 5));
+        CHECK(tokens[4] == Token("5", Token::Type::Number, 5));
+    }
+
+    SECTION("Parentheses") {
+        cout << "\nParentheses\n";
+        Lexer lexer("examples/LexerParentheses.ct");
+        auto tokens = GetTokens(lexer);
+        PrintTokens(tokens);
+        REQUIRE(tokens.size() == 12);
+        CHECK(tokens[1] == Token("[", Token::Type::SquareOpen, 2));
+        CHECK(tokens[2] == Token("}", Token::Type::CurlyClose, 2));
+        CHECK(tokens[6] == Token("{", Token::Type::CurlyOpen, 2));
+        CHECK(tokens[7] == Token(")", Token::Type::ParenClose, 3));
+        CHECK(tokens[10] == Token("(", Token::Type::ParenOpen, 3));
+    }
 }
 
 TEST_CASE("Parser") {

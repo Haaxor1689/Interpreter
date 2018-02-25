@@ -42,6 +42,13 @@ class Lexer {
         std::make_pair("..", Token::Type::BinaryOperator),
         std::make_pair("...", Token::Type::BinaryOperator),
         std::make_pair("..>", Token::Type::BinaryOperator) };
+    const std::map<char, Token::Type> brackets = {
+        std::make_pair('(', Token::Type::ParenOpen),
+        std::make_pair(')', Token::Type::ParenClose),
+        std::make_pair('[', Token::Type::SquareOpen),
+        std::make_pair(']', Token::Type::SquareClose),
+        std::make_pair('{', Token::Type::CurlyOpen),
+        std::make_pair('}', Token::Type::CurlyClose) };
 
 public:
     Lexer(const std::filesystem::path& path) : source(path), current(source.get()) {}
@@ -50,10 +57,10 @@ public:
         RemoveWhitespace();
         if (IsEoF(current))
             return Token("", Token::Type::EoF, line);
-
+        
         if (IsIdentifierStart(current))
             return Identifier();
-
+        
         if (IsNumberStart(current))
             return Number();
 
@@ -62,6 +69,11 @@ public:
         
         if (IsOperator(current))
             return Operator();
+
+        if (auto it = brackets.find(current); it != brackets.end()) {
+            current = source.get();
+            return Token(std::string(1, it->first), it->second, line);
+        }
 
         return Invalid();
     }
@@ -94,9 +106,22 @@ private:
     }
 
     Token Number() {
+        bool isDecimal = false;
+        bool hasNumberAfterDecimal = false;
+        bool isInvalid = false;
         do {
+            if (current == '.') {
+                if (isDecimal) isInvalid = true;
+                isDecimal = true;
+            } else if (isDecimal) {
+                hasNumberAfterDecimal = true;
+            }
             buffer += current;
         } while (IsNumber(current = source.get()));
+
+        if (isInvalid || (isDecimal && !hasNumberAfterDecimal))
+            return PopToken(Token::Type::Invalid);
+        
         return PopToken(Token::Type::Number);
     }
 
@@ -128,12 +153,12 @@ private:
         return PopToken(Token::Type::Invalid);
     }
 
-    bool IsEoF(char current) { return current == EOF; }
-    bool IsIdentifierStart(char current) { return std::isalpha(current) || current == '_'; }
-    bool IsIdentifier(char current) { return std::isalpha(current) || std::isdigit(current) || current == '_'; }
-    bool IsNumberStart(char current) { return std::isdigit(current); }
-    bool IsNumber(char current) { return std::isdigit(current) || current == '.'; }
-    bool IsStringMark(char current) { return current == '\"'; }
-    bool IsOperator(char current) { return operators.find(std::string(1, current)) != operators.end(); }
+    bool IsEoF(char c) { return c == EOF; }
+    bool IsIdentifierStart(char c) { return std::isalpha(c) || c == '_'; }
+    bool IsIdentifier(char c) { return std::isalpha(c) || std::isdigit(c) || c == '_'; }
+    bool IsNumberStart(char c) { return std::isdigit(c); }
+    bool IsNumber(char c) { return std::isdigit(c) || c == '.'; }
+    bool IsStringMark(char c) { return c == '\"'; }
+    bool IsOperator(char c) { return operators.find(std::string(1, c)) != operators.end(); }
 };
 }

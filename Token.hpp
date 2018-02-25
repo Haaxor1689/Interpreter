@@ -6,7 +6,7 @@ namespace Interpreter {
 struct Token {
     enum Type {
         Identifier, String, Number, UnaryOperator, BinaryOperator,
-        ParenOpen, ParenClose,
+        ParenOpen, ParenClose, SquareOpen, SquareClose, CurlyOpen, CurlyClose,
         If, Elseif, Else, For, Do, While,
         EoF, Invalid
     };
@@ -32,6 +32,12 @@ struct Token {
             case Token::Type::Number: return "Number";
             case Token::Type::UnaryOperator: return "Unary Operator";
             case Token::Type::BinaryOperator: return "Binary Operator";
+            case Token::Type::ParenOpen:
+            case Token::Type::ParenClose:
+            case Token::Type::SquareOpen:
+            case Token::Type::SquareClose:
+            case Token::Type::CurlyOpen:
+            case Token::Type::CurlyClose: return "Bracket";
             case Token::Type::EoF: return "EoF";
             case Token::Type::Invalid: return "Invalid Token";
             default: return "Keyword";
