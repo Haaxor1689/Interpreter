@@ -14,6 +14,35 @@ class Lexer {
     char current;
     unsigned line = 1;
 
+    const std::map<std::string, Token::Type> operators = {
+        std::make_pair("+", Token::Type::BinaryOperator),
+        std::make_pair("-", Token::Type::BinaryOperator),
+        std::make_pair("*", Token::Type::BinaryOperator),
+        std::make_pair("/", Token::Type::BinaryOperator),
+        std::make_pair("=", Token::Type::BinaryOperator),
+        std::make_pair("<", Token::Type::BinaryOperator),
+        std::make_pair(">", Token::Type::BinaryOperator),
+        std::make_pair("!", Token::Type::UnaryOperator),
+        std::make_pair("?", Token::Type::UnaryOperator),
+        std::make_pair(".", Token::Type::BinaryOperator),
+        std::make_pair(":", Token::Type::BinaryOperator),
+        std::make_pair("|", Token::Type::BinaryOperator),
+        std::make_pair("&", Token::Type::BinaryOperator),
+        std::make_pair("++", Token::Type::UnaryOperator),
+        std::make_pair("--", Token::Type::UnaryOperator),
+        std::make_pair("+=", Token::Type::BinaryOperator),
+        std::make_pair("-=", Token::Type::BinaryOperator),
+        std::make_pair("->", Token::Type::BinaryOperator),
+        std::make_pair("||", Token::Type::BinaryOperator),
+        std::make_pair("&&", Token::Type::BinaryOperator),
+        std::make_pair("==", Token::Type::BinaryOperator),
+        std::make_pair("!=", Token::Type::BinaryOperator),
+        std::make_pair("<=", Token::Type::BinaryOperator),
+        std::make_pair(">=", Token::Type::BinaryOperator),
+        std::make_pair("..", Token::Type::BinaryOperator),
+        std::make_pair("...", Token::Type::BinaryOperator),
+        std::make_pair("..>", Token::Type::BinaryOperator) };
+
 public:
     Lexer(const std::filesystem::path& path) : source(path), current(source.get()) {}
 
@@ -22,29 +51,33 @@ public:
         if (IsEoF(current))
             return Token("", Token::Type::EoF, line);
 
-        if (IsIdentifier(current))
+        if (IsIdentifierStart(current))
             return Identifier();
 
-        if (IsNumber(current))
+        if (IsNumberStart(current))
             return Number();
 
-        if (IsSpecial(current))
-            return Special();
+        if (IsStringMark(current))
+            return String();
+        
+        if (IsOperator(current))
+            return Operator();
 
-        return Token(buffer, Token::Type::Invalid, line);
+        return Invalid();
     }
 
 private:
     void RemoveWhitespace() {
-        bool isComment = false;
-        do {
+        bool isComment = current == '#';
+        while (std::isspace(current) || isComment) {
             if (current == '\n') {
                 ++line;
                 isComment = false;
             } else if (current == '#') {
                 isComment = true;
             }
-        } while (std::isspace(current = source.get()) || isComment);
+            current = source.get();
+        }
     }
 
     Token PopToken(Token::Type type) {
@@ -67,24 +100,40 @@ private:
         return PopToken(Token::Type::Number);
     }
 
-    Token Special() {
-        return Token(buffer, Token::Type::Invalid, line);
+    Token String() {
+        do {
+            if (IsEoF(current) || current == '\n') {
+                return PopToken(Token::Type::Invalid);
+            }
+            buffer += current;
+        } while (!IsStringMark(current = source.get()));
+        buffer += current;
+        current = source.get();
+        return PopToken(Token::Type::String);
     }
 
-    bool IsEoF(char current) {
-        return current == EOF;
+    Token Operator() {
+        do {
+            buffer += current;
+        } while (IsOperator(current = source.get()));
+
+        if (auto it = operators.find(buffer); it != operators.end())
+            return PopToken(it->second);
+        return PopToken(Token::Type::Invalid);
     }
 
-    bool IsIdentifier(char current) {
-        return std::isalpha(current) || current == '_';
+    Token Invalid() {
+        buffer += current;
+        current = source.get();
+        return PopToken(Token::Type::Invalid);
     }
 
-    bool IsNumber(char current) {
-        return std::isdigit(current);
-    }
-
-    bool IsSpecial(char current) {
-        return std::ispunct(current);
-    }
+    bool IsEoF(char current) { return current == EOF; }
+    bool IsIdentifierStart(char current) { return std::isalpha(current) || current == '_'; }
+    bool IsIdentifier(char current) { return std::isalpha(current) || std::isdigit(current) || current == '_'; }
+    bool IsNumberStart(char current) { return std::isdigit(current); }
+    bool IsNumber(char current) { return std::isdigit(current) || current == '.'; }
+    bool IsStringMark(char current) { return current == '\"'; }
+    bool IsOperator(char current) { return operators.find(std::string(1, current)) != operators.end(); }
 };
 }
