@@ -61,6 +61,7 @@ class Lexer {
         std::make_pair("return", Token::Type::Return),
         std::make_pair("func", Token::Type::Func),
         std::make_pair("in", Token::Type::In),
+        std::make_pair("as", Token::Type::As),
         std::make_pair("null", Token::Type::Null),
         std::make_pair("var", Token::Type::Var),
         std::make_pair("true", Token::Type::True),

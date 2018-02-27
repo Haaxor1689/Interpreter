@@ -7,7 +7,7 @@ struct Token {
     enum Type {
         Identifier, String, Number, UnaryOperator, BinaryOperator,
         ParenOpen, ParenClose, SquareOpen, SquareClose, CurlyOpen, CurlyClose,
-        If, Elseif, Else, For, Do, While, Return, Func, In,
+        If, Elseif, Else, For, Do, While, Return, Func, In, As,
         Null, Var, True, False,
         Colon, Semicolon, Comma,
         EoF, Invalid
