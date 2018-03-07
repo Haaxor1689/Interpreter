@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "Parser.hpp"
+#include "Interpreter"
 
 using namespace std;
 using namespace Interpreter;
@@ -60,7 +60,7 @@ TEST_CASE("Lexer") {
         REQUIRE(tokens.size() == 4);
         CHECK(tokens[0] == Token("foo2", Token::Type::Identifier, 2));
         CHECK(tokens[1] == Token("2.1", Token::Type::Number, 2));
-        CHECK(tokens[2] == Token("as", Token::Type::Identifier, 2));
+        CHECK(tokens[2] == Token("as", Token::Type::As, 2));
     }
 
     SECTION("String tokens") {
@@ -188,6 +188,9 @@ TEST_CASE("Lexer") {
 }
 
 TEST_CASE("Parser") {
-
+    SECTION("Foo") {
+        cout << "\nFoo\n";
+        Parser::Parse("examples/LexerComplex.ct");
+    }
 }
 
