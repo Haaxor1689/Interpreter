@@ -28,6 +28,10 @@ struct Token {
     }
 
     std::string TypeString() const {
+        return TypeString(type);
+    }
+
+    static std::string TypeString(Type type) {
         switch (type) {
             case Token::Type::Identifier: return "Identifier";
             case Token::Type::String: return "String";
@@ -40,6 +44,20 @@ struct Token {
             case Token::Type::SquareClose:
             case Token::Type::CurlyOpen:
             case Token::Type::CurlyClose: return "Bracket";
+            case Token::Type::If: return "If";
+            case Token::Type::Elseif: return "Elseif";
+            case Token::Type::Else: return "Else";
+            case Token::Type::For: return "For";
+            case Token::Type::Do: return "Do";
+            case Token::Type::While: return "While";
+            case Token::Type::Return: return "Return";
+            case Token::Type::Func: return "Func";
+            case Token::Type::In: return "In";
+            case Token::Type::As: return "As";
+            case Token::Type::Null: return "Null";
+            case Token::Type::Var: return "Var";
+            case Token::Type::True: return "True";
+            case Token::Type::False: return "False";
             case Token::Type::Colon:
             case Token::Type::Semicolon:
             case Token::Type::Comma: return "Special Token";

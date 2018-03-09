@@ -1,6 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
+#include <sstream>
+
 #include "Interpreter"
 
 using namespace std;
@@ -25,7 +27,7 @@ namespace {
 TEST_CASE("Lexer") {
     SECTION("Empty file gives EoF token") {
         cout << "\nEmpty file gives EoF token\n";
-        Lexer lexer("examples/LexerEmpty.ct");
+        Lexer lexer("examples/lexer/LexerEmpty.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 1);
@@ -34,7 +36,7 @@ TEST_CASE("Lexer") {
 
     SECTION("File with only a comment") {
         cout << "\nFile with only a comment\n";
-        Lexer lexer("examples/LexerComment.ct");
+        Lexer lexer("examples/lexer/LexerComment.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 1);
@@ -43,7 +45,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Two identifiers split by space") {
         cout << "\nTwo identifiers split by space\n";
-        Lexer lexer("examples/LexerTwoIdentifiers.ct");
+        Lexer lexer("examples/lexer/LexerTwoIdentifiers.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 3);
@@ -54,7 +56,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Number tokens") {
         cout << "\nNumber tokens\n";
-        Lexer lexer("examples/LexerNumbers.ct");
+        Lexer lexer("examples/lexer/LexerNumbers.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 4);
@@ -65,7 +67,7 @@ TEST_CASE("Lexer") {
 
     SECTION("String tokens") {
         cout << "\nString tokens\n";
-        Lexer lexer("examples/LexerStrings.ct");
+        Lexer lexer("examples/lexer/LexerStrings.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 6);
@@ -78,7 +80,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Invalid string tokens") {
         cout << "\nInvalid string tokens\n";
-        Lexer lexer("examples/LexerInvalidString.ct");
+        Lexer lexer("examples/lexer/LexerInvalidString.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 5);
@@ -91,7 +93,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Operators") {
         cout << "\nOperators\n";
-        Lexer lexer("examples/LexerOperators.ct");
+        Lexer lexer("examples/lexer/LexerOperators.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 19);
@@ -106,7 +108,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Invalid number tokens") {
         cout << "\nInvalid number tokens\n";
-        Lexer lexer("examples/LexerInvalidNumber.ct");
+        Lexer lexer("examples/lexer/LexerInvalidNumber.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 6);
@@ -119,7 +121,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Parentheses") {
         cout << "\nParentheses\n";
-        Lexer lexer("examples/LexerParentheses.ct");
+        Lexer lexer("examples/lexer/LexerParentheses.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 12);
@@ -132,7 +134,7 @@ TEST_CASE("Lexer") {
 
     SECTION("Keywords") {
         cout << "\nKeywords\n";
-        Lexer lexer("examples/LexerKeywords.ct");
+        Lexer lexer("examples/lexer/LexerKeywords.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 13);
@@ -152,7 +154,7 @@ TEST_CASE("Lexer") {
 
     SECTION("More keywords on complex example") {
         cout << "\nMore keywords on complex example\n";
-        Lexer lexer("examples/LexerComplex.ct");
+        Lexer lexer("examples/lexer/LexerComplex.ct");
         auto tokens = GetTokens(lexer);
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 42);
@@ -188,9 +190,28 @@ TEST_CASE("Lexer") {
 }
 
 TEST_CASE("Parser") {
-    SECTION("Foo") {
-        cout << "\nFoo\n";
-        Parser::Parse("examples/LexerComplex.ct");
+    SECTION("Simple parser test") {
+        Parser p("examples/parser/ParserSimple.ct");
+
+        ostringstream oss;
+        oss << p.ast;
+        CHECK(oss.str() == 
+        "Global: {\n"
+        "    FunctionDef: {\n"
+        "        Name: goo\n"
+        "        Arguments: {\n"
+        "        }\n"
+        "        Block: {\n"
+        "            String: \"a\"\n"
+        "            Double: 1\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+        );
+    }
+
+    SECTION("Wrong parser files") {
+
     }
 }
 

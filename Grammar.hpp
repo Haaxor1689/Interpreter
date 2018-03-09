@@ -7,6 +7,7 @@ namespace Interpreter {
 namespace Grammar {
 
 // Literals
+using lEoF = TokenType<Token::Type::EoF>;
 using lFunc = TokenType<Token::Type::Func>;
 using lIdentifier = TokenType<Token::Type::Identifier>;
 using lParenOpen = TokenType<Token::Type::ParenOpen>;
@@ -23,63 +24,27 @@ using lElseif = TokenType<Token::Type::Elseif>;
 using lElse = TokenType<Token::Type::Else>;
 using lWhile = TokenType<Token::Type::While>;
 using lDo = TokenType<Token::Type::Do>;
+using lVar = TokenType<Token::Type::Var>;
 
 // Forward declarations
-struct Global;
-struct FunctionDef;
 struct Block;
-struct Statement;
-struct ForExpr;
-struct IfExpr;
-struct If;
-struct Elseif;
-struct Else;
-struct WhileExpr;
-struct Expression;
-struct FunctionCall;
-struct Arguments;
-
-// #define RULE(name, ...) struct name : public Rule<__VA_ARGS__> { using base = Rule<__VA_ARGS__>; using base::base; };
-// #define RULE_GROUP(name, ...) struct name : public RuleGroup<__VA_ARGS__> { using base = RuleGroup<__VA_ARGS__>; using base::base; };
 
 // Rules
-// RULE(Arguments, lParenOpen, lIdentifier, lParenClose)
-struct Arguments : public Rule<lParenOpen, lIdentifier, lParenClose> {};
-// RULE(FunctionCall, lIdentifier, Arguments)
-struct FunctionCall : public Rule<lIdentifier, Arguments> {};
-// RULE(Expression1, FunctionCall)
-// RULE(Expression2, lIdentifier)
-// RULE(Expression3, lString)
-// RULE(Expression4, lNumber)
-// RULE_GROUP(Expression, Expression1, Expression2, Expression3, Expression4)
-struct Expression : public RuleGroup<FunctionCall, lIdentifier, lString, lNumber> {};
-// RULE(WhileExpr1, lWhile, Expression, Block*)
-// RULE(WhileExpr2, lDo, Block*, lWhile, Expression, lSemicolon)
-// RULE_GROUP(WhileExpr, WhileExpr1, WhileExpr2)
-struct WhileExpr : public RuleGroup<Rule<lWhile, Expression, Block*>, Rule<lDo, Block*, lWhile, Expression, lSemicolon>> {};
-// RULE(Else, lElse, Block*)
-struct Else : Rule<lElse, Block*> {};
-// RULE(Elseif, lElseif, Expression, Block*)
-struct Elseif : Rule<lElseif, Expression, Block*> {};
-// RULE(If, lIf, Expression, Block*)
-struct If : public Rule<lIf, Expression, Block*> {};
-// RULE(IfExpr1, If)
-// RULE(IfExpr2, If, List<Elseif>, Else)
-// RULE_GROUP(IfExpr, IfExpr1, IfExpr2)
-struct IfExpre : public RuleGroup<If, Rule<If, List<Elseif>, Else>> {};
-// RULE(ForExpr, lIdentifier, lIn, Expression, Block*)
-struct ForExpr : public Rule<lIdentifier, lIn, Expression, Block*> {};
-// RULE(Statement1, ForExpr)
-// RULE(Statement2, IfExpr)
-// RULE(Statement3, WhileExpr)
-// RULE(Statement4, Expression, lSemicolon)
-// RULE_GROUP(Statement, Statement1, Statement2, Statement3, Statement4)
+struct Arguments : public Rule<lParenOpen, List<lIdentifier>, lParenClose> {};
+struct FunctionCall : public Rule<Arguments> {};
+struct IdentifierExp : public RuleGroup<FunctionCall, Epsilon> {};
+struct VariableDef : public Rule<lVar, lIdentifier> {};
+struct Expression : public RuleGroup<Rule<lIdentifier, IdentifierExp>, lString, lNumber, VariableDef> {};
+struct WhileExpr : public RuleGroup<Rule<lWhile, Expression, Block*>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {};
+struct Else : Rule<lElse, Block> {};
+struct Elseif : Rule<lElseif, Expression, Block> {};
+struct If : public Rule<lIf, Expression, Block> {};
+struct IfExpr : public RuleGroup<If, Rule<If, List<Elseif>, Else>> {};
+struct ForExpr : public Rule<lFor, lIdentifier, lIn, Expression, Block> {};
 struct Statement : RuleGroup<ForExpr, IfExpr, WhileExpr, Rule<Expression, lSemicolon>> {};
-// RULE(Block, lCurlyOpen, List<Statement>, lCurlyClose)
 struct Block : public Rule<lCurlyOpen, List<Statement>, lCurlyClose> {};
-// RULE(FunctionDef, lFunc, lIdentifier, Arguments, Block)
 struct FunctionDef : public Rule<lFunc, lIdentifier, Arguments, Block> {};
-struct Global : public List<FunctionDef> {};
-// RULE(Global, List<FunctionDef>)
+struct Global : public Rule<List<FunctionDef>, lEoF> {};
+
 }
 }

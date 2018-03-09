@@ -10,20 +10,14 @@ class Parser {
     Lexer lexer;
     Token token;
 
-    Parser(const std::filesystem::path& path) : lexer(path), token(lexer.Next()) {}
-    Ast operator()() {
-        Ast ast;
-        ast.root.MatchToken<0>(lexer.Next(), [this](){ return lexer.Next(); });
-        // for (;token.type != Token::Type::EoF; token = lexer.Next()) {
-            // std::cout << token << std::endl;
-        // }
-        return ast;
-    }
-
 public:
-    static Ast Parse(const std::filesystem::path& path) {
-        Parser parser(path);
-        return parser();
+    Ast ast;
+    Parser(const std::filesystem::path& path) : lexer(path), token(lexer.Next()) {
+        try {
+            ast = Ast(token, [this](){ token = lexer.Next(); });
+        } catch (const ParseError& err) {
+            std::cerr << "\033[31m" << err.what() << "\033[0m" << std::endl;
+        }
     }
 };
 }

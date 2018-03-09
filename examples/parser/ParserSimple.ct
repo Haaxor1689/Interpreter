@@ -1,0 +1,7 @@
+# Simple example
+
+# Comment
+func goo() {
+    "a";
+    1;
+} # Another comment
