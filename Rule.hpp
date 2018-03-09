@@ -90,7 +90,7 @@ struct RuleGroup {
     static constexpr std::vector<Token::Type> ExpectedToken() {
         auto head = Type<Index>::ExpectedToken();
         if constexpr (Index + 1 < Size) {
-            auto tail = Type<Index + 1>::ExpectedToken();
+            auto tail = ExpectedToken<Index + 1>();
             head.reserve(head.size() + tail.size());
             head.insert(head.end(), tail.begin(), tail.end());
         }

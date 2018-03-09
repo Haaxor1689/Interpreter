@@ -22,6 +22,10 @@ namespace {
         for (const auto& token : tokens)
             cout << token << endl;
     }
+
+    void CreateParser(const std::string& name) {
+        Parser p("examples/parser/" + name);
+    }
 }
 
 TEST_CASE("Lexer") {
@@ -210,8 +214,48 @@ TEST_CASE("Parser") {
         );
     }
 
-    SECTION("Wrong parser files") {
+    SECTION("For loop parsing") {
+        Parser p("examples/parser/ParserForLoop.ct");
 
+        ostringstream oss;
+        oss << p.ast;
+        CHECK(oss.str() == 
+        "Global: {\n"
+        "    FunctionDef: {\n"
+        "        Name: goo\n"
+        "        Arguments: {\n"
+        "            Variable: foo\n"
+        "        }\n"
+        "        Block: {\n"
+        "            For: {\n"
+        "                Variable: aaa\n"
+        "                Range: {\n"
+        "                    Variable: bbb\n"
+        "                }\n"
+        "                Block: {\n"
+        "                    For: {\n"
+        "                        Variable: xxx\n"
+        "                        Range: {\n"
+        "                            Variable: yyy\n"
+        "                        }\n"
+        "                        Block: {\n"
+        "                            Variable: ccc\n"
+        "                        }\n"
+        "                    }\n"
+        "                }\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+        );
+    }
+
+    SECTION("Wrong parser files") {
+        CHECK_THROWS_WITH(CreateParser("WrongGlobal.ct"), "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
+        CHECK_THROWS_WITH(CreateParser("WrongFuncArg.ct"), "Failed to parse [Identifier 'a' on line 2]. Expected Var.");
+        CHECK_THROWS_WITH(CreateParser("WrongFuncComma.ct"), "Failed to parse [Bracket ')' on line 2]. Expected Var.");
+        CHECK_THROWS_WITH(CreateParser("WrongFuncBlock.ct"), "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
+        CHECK_THROWS_WITH(CreateParser("WrongStatement.ct"), "Failed to parse [Func 'func' on line 3]. Expected one of following { For, If, While, Do, Identifier, String, Number, Var, }.");
     }
 }
 

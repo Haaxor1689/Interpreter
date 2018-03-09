@@ -16,5 +16,5 @@ file(GLOB RESOURCES ${CMAKE_SOURCE_DIR}/examples/*.ct)
 file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/examples)
 
 # Add executable
-add_executable(Main Main.cpp)
-add_executable(Test Tests.cpp)
+add_executable(Main Main.cpp Ast.cpp)
+add_executable(Test Tests.cpp Ast.cpp)

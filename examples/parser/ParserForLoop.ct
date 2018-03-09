@@ -1,0 +1,10 @@
+# Simple example
+
+# Comment
+func goo(var foo) {
+    for aaa in bbb {
+        for xxx in yyy {
+            ccc;
+        }
+    }
+} # Another comment

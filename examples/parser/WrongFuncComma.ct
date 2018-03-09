@@ -1,0 +1,2 @@
+# Function without argument after comma
+func foo(var a,) {}

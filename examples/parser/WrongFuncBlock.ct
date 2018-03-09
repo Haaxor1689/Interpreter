@@ -1,0 +1,3 @@
+# Function without opening braces
+func foo()
+}

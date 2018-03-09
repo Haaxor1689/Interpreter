@@ -1,0 +1,2 @@
+# Non function in global scope
+foo(a, b);

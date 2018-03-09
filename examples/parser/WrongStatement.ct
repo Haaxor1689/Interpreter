@@ -1,0 +1,4 @@
+# Wrong statement in code block
+func foo(var a, var b) {
+    func goo;
+}

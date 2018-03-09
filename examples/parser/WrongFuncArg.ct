@@ -1,0 +1,4 @@
+# Function with incorrect arguments
+func goo(a, b, c) {
+    
+}

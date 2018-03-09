@@ -58,9 +58,9 @@ struct Token {
             case Token::Type::Var: return "Var";
             case Token::Type::True: return "True";
             case Token::Type::False: return "False";
-            case Token::Type::Colon:
-            case Token::Type::Semicolon:
-            case Token::Type::Comma: return "Special Token";
+            case Token::Type::Colon: return "Colon";
+            case Token::Type::Semicolon: return "Semicolon";
+            case Token::Type::Comma: return "Comma";
             case Token::Type::EoF: return "EoF";
             case Token::Type::Invalid: return "Invalid Token";
             default: return "Keyword";
