@@ -1,0 +1,5 @@
+# Function call example
+
+func goo(var a) {
+    goo(a);
+}

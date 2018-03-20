@@ -46,5 +46,5 @@ struct Block : public Rule<lCurlyOpen, List<Statement>, lCurlyClose> {};
 struct FunctionDef : public Rule<lFunc, lIdentifier, Arguments, Block> {};
 struct Global : public Rule<List<FunctionDef>, lEoF> {};
 
-}
-}
+} // namespace Grammar
+} // namespace Interpreter

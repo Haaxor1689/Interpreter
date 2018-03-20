@@ -7,8 +7,10 @@
 #include "Token.hpp"
 
 namespace Interpreter {
-struct ParseError: public std::exception {
-    ParseError(Token received, const std::vector<Token::Type>& expected) : received(received), expected(expected) {}
+
+struct ParseError : public std::exception {
+    ParseError(Token received, const std::vector<Token::Type>& expected)
+        : received(received), expected(expected) {}
 
     Token received;
     std::vector<Token::Type> expected;
@@ -31,4 +33,5 @@ struct ParseError: public std::exception {
         return ret.str().c_str();
     }
 };
-}
+
+} // namespace Interpreter

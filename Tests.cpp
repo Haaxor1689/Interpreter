@@ -9,24 +9,26 @@ using namespace std;
 using namespace Interpreter;
 
 namespace {
-    vector<Token> GetTokens(Lexer& lexer) {
-        vector<Token> tokens;
-        while (true) {
-            tokens.push_back(lexer.Next());
-            if (tokens.back().type == Token::Type::EoF)
-                return tokens;
-        }
-    }
 
-    void PrintTokens(const vector<Token>& tokens) {
-        for (const auto& token : tokens)
-            cout << token << endl;
-    }
-
-    void CreateParser(const std::string& name) {
-        Parser p("examples/parser/" + name);
+vector<Token> GetTokens(Lexer& lexer) {
+    vector<Token> tokens;
+    while (true) {
+        tokens.push_back(lexer.Next());
+        if (tokens.back().type == Token::Type::EoF)
+            return tokens;
     }
 }
+
+void PrintTokens(const vector<Token>& tokens) {
+    for (const auto& token : tokens)
+        cout << token << endl;
+}
+
+void CreateParser(const std::string& name) {
+    Parser p("examples/parser/" + name);
+}
+
+} // namespace
 
 TEST_CASE("Lexer") {
     SECTION("Empty file gives EoF token") {
@@ -76,7 +78,7 @@ TEST_CASE("Lexer") {
         PrintTokens(tokens);
         REQUIRE(tokens.size() == 6);
         CHECK(tokens[0] == Token("foo", Token::Type::Identifier, 2));
-        CHECK(tokens[1] == Token("\"\"", Token::Type::String, 2)); 
+        CHECK(tokens[1] == Token("\"\"", Token::Type::String, 2));
         CHECK(tokens[2] == Token("\"foo 1\"", Token::Type::String, 2));
         CHECK(tokens[3] == Token("3", Token::Type::Number, 2));
         CHECK(tokens[4] == Token("goo2", Token::Type::Identifier, 2));
@@ -199,19 +201,18 @@ TEST_CASE("Parser") {
 
         ostringstream oss;
         oss << p.ast;
-        CHECK(oss.str() == 
-        "Global: {\n"
-        "    FunctionDef: {\n"
-        "        Name: goo\n"
-        "        Arguments: {\n"
-        "        }\n"
-        "        Block: {\n"
-        "            String: \"a\"\n"
-        "            Double: 1\n"
-        "        }\n"
-        "    }\n"
-        "}\n"
-        );
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    FunctionDef: {\n"
+              "        Name: goo\n"
+              "        Arguments: {\n"
+              "        }\n"
+              "        Block: {\n"
+              "            String: \"a\"\n"
+              "            Double: 1\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
     }
 
     SECTION("For loop parsing") {
@@ -219,43 +220,78 @@ TEST_CASE("Parser") {
 
         ostringstream oss;
         oss << p.ast;
-        CHECK(oss.str() == 
-        "Global: {\n"
-        "    FunctionDef: {\n"
-        "        Name: goo\n"
-        "        Arguments: {\n"
-        "            Variable: foo\n"
-        "        }\n"
-        "        Block: {\n"
-        "            For: {\n"
-        "                Variable: aaa\n"
-        "                Range: {\n"
-        "                    Variable: bbb\n"
-        "                }\n"
-        "                Block: {\n"
-        "                    For: {\n"
-        "                        Variable: xxx\n"
-        "                        Range: {\n"
-        "                            Variable: yyy\n"
-        "                        }\n"
-        "                        Block: {\n"
-        "                            Variable: ccc\n"
-        "                        }\n"
-        "                    }\n"
-        "                }\n"
-        "            }\n"
-        "        }\n"
-        "    }\n"
-        "}\n"
-        );
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    FunctionDef: {\n"
+              "        Name: goo\n"
+              "        Arguments: {\n"
+              "            Variable: foo\n"
+              "        }\n"
+              "        Block: {\n"
+              "            For: {\n"
+              "                Variable: aaa\n"
+              "                Range: {\n"
+              "                    Variable: bbb\n"
+              "                }\n"
+              "                Block: {\n"
+              "                    For: {\n"
+              "                        Variable: xxx\n"
+              "                        Range: {\n"
+              "                            Variable: yyy\n"
+              "                        }\n"
+              "                        Block: {\n"
+              "                            Variable: ccc\n"
+              "                        }\n"
+              "                    }\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
+    }
+
+    SECTION("Function call parsing") {
+        Parser p("examples/parser/ParserFunctionCall.ct");
+
+        ostringstream oss;
+        oss << p.ast;
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    FunctionDef: {\n"
+              "        Name: goo\n"
+              "        Arguments: {\n"
+              "            Variable: a\n"
+              "        }\n"
+              "        Block: {\n"
+              "            FunctionCall: {\n"
+              "                Name: goo\n"
+              "                Arguments: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
     }
 
     SECTION("Wrong parser files") {
-        CHECK_THROWS_WITH(CreateParser("WrongGlobal.ct"), "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
+        CHECK_THROWS_WITH(CreateParser("WrongGlobal.ct"),
+                          "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
         CHECK_THROWS_WITH(CreateParser("WrongFuncArg.ct"), "Failed to parse [Identifier 'a' on line 2]. Expected Var.");
         CHECK_THROWS_WITH(CreateParser("WrongFuncComma.ct"), "Failed to parse [Bracket ')' on line 2]. Expected Var.");
-        CHECK_THROWS_WITH(CreateParser("WrongFuncBlock.ct"), "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
-        CHECK_THROWS_WITH(CreateParser("WrongStatement.ct"), "Failed to parse [Func 'func' on line 3]. Expected one of following { For, If, While, Do, Identifier, String, Number, Var, }.");
+        CHECK_THROWS_WITH(CreateParser("WrongFuncBlock.ct"),
+                          "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
+        CHECK_THROWS_WITH(CreateParser("WrongStatement.ct"),
+                          "Failed to parse [Func 'func' on line 3]. Expected one of following { For, If, While, Do, "
+                          "Identifier, String, Number, Var, }.");
     }
 }
 
+TEST_CASE("Symbol Table") {
+    SECTION("Function names") {
+        Parser p("examples/symbols/FunctionDef.ct");
+
+        CHECK(p.ast.root->symbols.GetSymbol("foo") == 1);
+        CHECK(p.ast.root->symbols.GetSymbol("goo") == 2);
+    }
+}

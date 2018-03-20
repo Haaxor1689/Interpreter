@@ -1,0 +1,4 @@
+# Bunch of function definitions
+
+func foo() { }
+func goo(var a) { }

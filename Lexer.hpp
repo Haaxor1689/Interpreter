@@ -8,6 +8,7 @@
 #include "Token.hpp"
 
 namespace Interpreter {
+
 class Lexer {
     std::ifstream source;
     std::string buffer;
@@ -15,75 +16,52 @@ class Lexer {
     unsigned line = 1;
 
     const std::map<std::string, Token::Type> operators = {
-        std::make_pair("+", Token::Type::BinaryOperator),
-        std::make_pair("-", Token::Type::BinaryOperator),
-        std::make_pair("*", Token::Type::BinaryOperator),
-        std::make_pair("/", Token::Type::BinaryOperator),
-        std::make_pair("=", Token::Type::BinaryOperator),
-        std::make_pair("<", Token::Type::BinaryOperator),
-        std::make_pair(">", Token::Type::BinaryOperator),
-        std::make_pair("!", Token::Type::UnaryOperator),
-        std::make_pair("?", Token::Type::UnaryOperator),
-        std::make_pair(".", Token::Type::BinaryOperator),
-        std::make_pair("|", Token::Type::BinaryOperator),
-        std::make_pair("&", Token::Type::BinaryOperator),
-        std::make_pair("++", Token::Type::UnaryOperator),
-        std::make_pair("--", Token::Type::UnaryOperator),
-        std::make_pair("+=", Token::Type::BinaryOperator),
-        std::make_pair("-=", Token::Type::BinaryOperator),
-        std::make_pair("->", Token::Type::BinaryOperator),
-        std::make_pair("||", Token::Type::BinaryOperator),
-        std::make_pair("&&", Token::Type::BinaryOperator),
-        std::make_pair("==", Token::Type::BinaryOperator),
-        std::make_pair("!=", Token::Type::BinaryOperator),
-        std::make_pair("<=", Token::Type::BinaryOperator),
-        std::make_pair(">=", Token::Type::BinaryOperator),
-        std::make_pair("..", Token::Type::BinaryOperator),
-        std::make_pair("...", Token::Type::BinaryOperator),
-        std::make_pair("..<", Token::Type::BinaryOperator) };
+        std::make_pair("+", Token::Type::BinaryOperator), std::make_pair("-", Token::Type::BinaryOperator),
+        std::make_pair("*", Token::Type::BinaryOperator), std::make_pair("/", Token::Type::BinaryOperator),
+        std::make_pair("=", Token::Type::BinaryOperator), std::make_pair("<", Token::Type::BinaryOperator),
+        std::make_pair(">", Token::Type::BinaryOperator), std::make_pair("!", Token::Type::UnaryOperator),
+        std::make_pair("?", Token::Type::UnaryOperator), std::make_pair(".", Token::Type::BinaryOperator),
+        std::make_pair("|", Token::Type::BinaryOperator), std::make_pair("&", Token::Type::BinaryOperator),
+        std::make_pair("++", Token::Type::UnaryOperator), std::make_pair("--", Token::Type::UnaryOperator),
+        std::make_pair("+=", Token::Type::BinaryOperator), std::make_pair("-=", Token::Type::BinaryOperator),
+        std::make_pair("->", Token::Type::BinaryOperator), std::make_pair("||", Token::Type::BinaryOperator),
+        std::make_pair("&&", Token::Type::BinaryOperator), std::make_pair("==", Token::Type::BinaryOperator),
+        std::make_pair("!=", Token::Type::BinaryOperator), std::make_pair("<=", Token::Type::BinaryOperator),
+        std::make_pair(">=", Token::Type::BinaryOperator), std::make_pair("..", Token::Type::BinaryOperator),
+        std::make_pair("...", Token::Type::BinaryOperator), std::make_pair("..<", Token::Type::BinaryOperator)};
     const std::map<char, Token::Type> special = {
-        std::make_pair('(', Token::Type::ParenOpen),
-        std::make_pair(')', Token::Type::ParenClose),
-        std::make_pair('[', Token::Type::SquareOpen),
-        std::make_pair(']', Token::Type::SquareClose),
-        std::make_pair('{', Token::Type::CurlyOpen),
-        std::make_pair('}', Token::Type::CurlyClose),
-        std::make_pair(':', Token::Type::Colon),
-        std::make_pair(';', Token::Type::Semicolon),
-        std::make_pair(',', Token::Type::Comma) };
+        std::make_pair('(', Token::Type::ParenOpen), std::make_pair(')', Token::Type::ParenClose),
+        std::make_pair('[', Token::Type::SquareOpen), std::make_pair(']', Token::Type::SquareClose),
+        std::make_pair('{', Token::Type::CurlyOpen), std::make_pair('}', Token::Type::CurlyClose),
+        std::make_pair(':', Token::Type::Colon), std::make_pair(';', Token::Type::Semicolon),
+        std::make_pair(',', Token::Type::Comma)};
     const std::map<std::string, Token::Type> keywords = {
-        std::make_pair("if", Token::Type::If),
-        std::make_pair("elseif", Token::Type::Elseif),
-        std::make_pair("else", Token::Type::Else),
-        std::make_pair("for", Token::Type::For),
-        std::make_pair("do", Token::Type::Do),
-        std::make_pair("while", Token::Type::While),
-        std::make_pair("return", Token::Type::Return),
-        std::make_pair("func", Token::Type::Func),
-        std::make_pair("in", Token::Type::In),
-        std::make_pair("as", Token::Type::As),
-        std::make_pair("null", Token::Type::Null),
-        std::make_pair("var", Token::Type::Var),
-        std::make_pair("true", Token::Type::True),
-        std::make_pair("false", Token::Type::False) };
+        std::make_pair("if", Token::Type::If), std::make_pair("elseif", Token::Type::Elseif),
+        std::make_pair("else", Token::Type::Else), std::make_pair("for", Token::Type::For),
+        std::make_pair("do", Token::Type::Do), std::make_pair("while", Token::Type::While),
+        std::make_pair("return", Token::Type::Return), std::make_pair("func", Token::Type::Func),
+        std::make_pair("in", Token::Type::In), std::make_pair("as", Token::Type::As),
+        std::make_pair("null", Token::Type::Null), std::make_pair("var", Token::Type::Var),
+        std::make_pair("true", Token::Type::True), std::make_pair("false", Token::Type::False)};
 
 public:
-    Lexer(const std::filesystem::path& path) : source(path), current(source.get()) {}
+    Lexer(const std::filesystem::path& path)
+        : source(path), current(source.get()) {}
 
     Token Next() {
         RemoveWhitespace();
         if (IsEoF(current))
             return Token("", Token::Type::EoF, line);
-        
+
         if (IsIdentifierStart(current))
             return Identifier();
-        
+
         if (IsNumberStart(current))
             return Number();
 
         if (IsStringMark(current))
             return String();
-        
+
         if (IsOperator(current))
             return Operator();
 
@@ -132,7 +110,8 @@ private:
         bool isInvalid = false;
         do {
             if (current == '.') {
-                if (isDecimal) isInvalid = true;
+                if (isDecimal)
+                    isInvalid = true;
                 isDecimal = true;
             } else if (isDecimal) {
                 hasNumberAfterDecimal = true;
@@ -142,7 +121,7 @@ private:
 
         if (isInvalid || (isDecimal && !hasNumberAfterDecimal))
             return PopToken(Token::Type::Invalid);
-        
+
         return PopToken(Token::Type::Number);
     }
 
@@ -174,12 +153,27 @@ private:
         return PopToken(Token::Type::Invalid);
     }
 
-    bool IsEoF(char c) { return c == EOF; }
-    bool IsIdentifierStart(char c) { return std::isalpha(c) || c == '_'; }
-    bool IsIdentifier(char c) { return std::isalpha(c) || std::isdigit(c) || c == '_'; }
-    bool IsNumberStart(char c) { return std::isdigit(c); }
-    bool IsNumber(char c) { return std::isdigit(c) || c == '.'; }
-    bool IsStringMark(char c) { return c == '\"'; }
-    bool IsOperator(char c) { return operators.find(std::string(1, c)) != operators.end(); }
+    bool IsEoF(char c) {
+        return c == EOF;
+    }
+    bool IsIdentifierStart(char c) {
+        return std::isalpha(c) || c == '_';
+    }
+    bool IsIdentifier(char c) {
+        return std::isalpha(c) || std::isdigit(c) || c == '_';
+    }
+    bool IsNumberStart(char c) {
+        return std::isdigit(c);
+    }
+    bool IsNumber(char c) {
+        return std::isdigit(c) || c == '.';
+    }
+    bool IsStringMark(char c) {
+        return c == '\"';
+    }
+    bool IsOperator(char c) {
+        return operators.find(std::string(1, c)) != operators.end();
+    }
 };
-}
+
+} // namespace Interpreter

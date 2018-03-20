@@ -97,4 +97,5 @@ struct RuleGroup {
         return head;
     }
 };
-}
+
+} // namespace Interpreter
