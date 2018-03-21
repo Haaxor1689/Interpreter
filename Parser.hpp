@@ -1,7 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
 #include "Lexer.hpp"
 #include "Ast.hpp"
 
@@ -13,7 +11,7 @@ class Parser {
 
 public:
     Ast ast;
-    Parser(const std::filesystem::path& path)
+    Parser(const std::string& path)
         : lexer(path), token(lexer.Next()) {
         ast = Ast(token, [this]() { token = lexer.Next(); });
     }

@@ -3,7 +3,6 @@
 #include <fstream>
 #include <map>
 #include <regex>
-#include <filesystem>
 
 #include "Token.hpp"
 
@@ -28,13 +27,15 @@ class Lexer {
         std::make_pair("&&", Token::Type::BinaryOperator), std::make_pair("==", Token::Type::BinaryOperator),
         std::make_pair("!=", Token::Type::BinaryOperator), std::make_pair("<=", Token::Type::BinaryOperator),
         std::make_pair(">=", Token::Type::BinaryOperator), std::make_pair("..", Token::Type::BinaryOperator),
-        std::make_pair("...", Token::Type::BinaryOperator), std::make_pair("..<", Token::Type::BinaryOperator)};
+        std::make_pair("...", Token::Type::BinaryOperator), std::make_pair("..<", Token::Type::BinaryOperator)
+    };
     const std::map<char, Token::Type> special = {
         std::make_pair('(', Token::Type::ParenOpen), std::make_pair(')', Token::Type::ParenClose),
         std::make_pair('[', Token::Type::SquareOpen), std::make_pair(']', Token::Type::SquareClose),
         std::make_pair('{', Token::Type::CurlyOpen), std::make_pair('}', Token::Type::CurlyClose),
         std::make_pair(':', Token::Type::Colon), std::make_pair(';', Token::Type::Semicolon),
-        std::make_pair(',', Token::Type::Comma)};
+        std::make_pair(',', Token::Type::Comma)
+    };
     const std::map<std::string, Token::Type> keywords = {
         std::make_pair("if", Token::Type::If), std::make_pair("elseif", Token::Type::Elseif),
         std::make_pair("else", Token::Type::Else), std::make_pair("for", Token::Type::For),
@@ -42,10 +43,11 @@ class Lexer {
         std::make_pair("return", Token::Type::Return), std::make_pair("func", Token::Type::Func),
         std::make_pair("in", Token::Type::In), std::make_pair("as", Token::Type::As),
         std::make_pair("null", Token::Type::Null), std::make_pair("var", Token::Type::Var),
-        std::make_pair("true", Token::Type::True), std::make_pair("false", Token::Type::False)};
+        std::make_pair("true", Token::Type::True), std::make_pair("false", Token::Type::False)
+    };
 
 public:
-    Lexer(const std::filesystem::path& path)
+    Lexer(const std::string& path)
         : source(path), current(source.get()) {}
 
     Token Next() {

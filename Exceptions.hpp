@@ -9,14 +9,7 @@
 namespace Interpreter {
 
 struct ParseException : public std::exception {
-    ParseException(Token received, const std::vector<Token::Type>& expected)
-        : received(received), expected(expected) {}
-
-    Token received;
-    std::vector<Token::Type> expected;
-
-    virtual char const* what() const throw() {
-        std::stringstream ret;
+    ParseException(Token received, const std::vector<Token::Type>& expected) {
         ret << "Failed to parse " << received << ". Expected ";
         if (expected.size() == 0) {
             ret << Token::TypeString(Token::Type::Invalid);
@@ -30,47 +23,50 @@ struct ParseException : public std::exception {
             ret << "}";
         }
         ret << ".";
+    }
+
+    char const* what() const noexcept override {
         return ret.str().c_str();
     }
+
+private:
+    std::stringstream ret;
 };
 
 struct UndefinedIdentifierException : public std::exception {
     UndefinedIdentifierException(const std::string& identifier)
-        : identifier(identifier) {}
+        : message("Found undefined identifier " + identifier + ".") {}
 
-    std::string identifier;
-
-    virtual char const* what() const throw() {
-        std::stringstream ret;
-        ret << "Found undefined identifier " << identifier << ".";
-        return ret.str().c_str();
+    char const* what() const noexcept override {
+        return message.c_str();
     }
+
+private:
+    std::string message;
 };
 
 struct UndefinedIdentifierNameException : public std::exception {
     UndefinedIdentifierNameException(unsigned identifier)
-        : identifier(identifier) {}
+        : message("Tried to access undefined identifier with id " + std::to_string(identifier) + ".") {}
 
-    unsigned identifier;
-
-    virtual char const* what() const throw() {
-        std::stringstream ret;
-        ret << "Tried to access undefined identifier with id " << identifier << ".";
-        return ret.str().c_str();
+    char const* what() const noexcept override {
+        return message.c_str();
     }
+
+private:
+    std::string message;
 };
 
 struct IdentifierRedefinitionException : public std::exception {
     IdentifierRedefinitionException(const std::string& identifier)
-        : identifier(identifier) {}
+        : message("Tried to redefine identifier " + identifier + ".") {}
 
-    std::string identifier;
-
-    virtual char const* what() const throw() {
-        std::stringstream ret;
-        ret << "Tried to redefine identifier " << identifier << ".";
-        return ret.str().c_str();
+    char const* what() const noexcept override {
+        return message.c_str();
     }
+
+private:
+    std::string message;
 };
 
 } // namespace Interpreter
