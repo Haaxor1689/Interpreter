@@ -292,7 +292,7 @@ TEST_CASE("Symbol Table") {
     SECTION("Function names") {
         Parser p("examples/symbols/FunctionDef.ct");
 
-        CHECK(p.ast.root->symbols.GetSymbol("foo") == 1);
-        CHECK(p.ast.root->symbols.GetSymbol("goo") == 2);
+        CHECK(p.ast.Root().Symbols().GetSymbol("foo") == 1);
+        CHECK(p.ast.Root().Symbols().GetSymbol("goo") == 2);
     }
 }

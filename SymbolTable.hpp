@@ -8,7 +8,7 @@
 
 namespace Interpreter {
 
-struct SymbolTable {
+class SymbolTable {
     using VarID = unsigned;
     std::map<std::string, VarID> local;
     SymbolTable* parent;
