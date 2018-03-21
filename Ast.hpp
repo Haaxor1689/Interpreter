@@ -48,9 +48,8 @@ struct Node {
         : parent(parent) {}
 
     virtual void Print(std::ostream& os, size_t depth) const = 0;
-    virtual SymbolTable& GetSymbols() {
-        return parent->GetSymbols();
-    }
+    virtual SymbolTable& Symbols() { return parent->Symbols(); }
+    virtual const SymbolTable& Symbols() const { return parent->Symbols(); }
     std::string Indent(size_t depth) const {
         std::string ret;
         for (size_t i = 0; i < depth; ++i)
@@ -139,7 +138,7 @@ struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
 };
 
 struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
-    std::shared_ptr<VariableRef> variable;
+    std::shared_ptr<VariableDef> variable;
     std::shared_ptr<Expression> range;
     std::shared_ptr<Block> block;
 
@@ -159,9 +158,8 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
     SymbolTable symbols;
 
     Block(Node* parent, const Token& token, const std::function<void()>& shift);
-    SymbolTable& GetSymbols() override {
-        return symbols;
-    }
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
@@ -172,6 +170,8 @@ struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Blo
     SymbolTable symbols;
 
     FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
@@ -180,6 +180,8 @@ struct Global : public Node, public Rule<List<FunctionDef>, lEoF> {
     SymbolTable symbols;
 
     Global(const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 

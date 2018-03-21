@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <iostream>
 
-#include "ParseError.hpp"
+#include "Exceptions.hpp"
 
 namespace Interpreter {
 
@@ -30,7 +30,7 @@ struct TokenType {
 
     static void RequireToken(Token token) {
         if (token.type != Type)
-            throw ParseError(token, { Type });
+            throw ParseException(token, { Type });
     }
 
     template <size_t Index = 0>

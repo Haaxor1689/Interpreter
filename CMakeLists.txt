@@ -5,7 +5,7 @@ project(Interpreter)
 # Configure compiler flags for our project
 if (CMAKE_CXX_COMPILER_ID MATCHES Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
   # using regular Clang or AppleClang or GCC
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -pedantic -Wold-style-cast -lstdc++fs")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -pedantic -Wold-style-cast -lstdc++fs -O0")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
   # using Visual Studio C++
   set(CMAKE_CXX_FLAGS "/std:c++1z /permissive- /W4 /EHsc")

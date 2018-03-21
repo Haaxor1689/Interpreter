@@ -5,12 +5,12 @@ namespace Interpreter {
 VariableRef::VariableRef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     lIdentifier::RequireToken(token);
-    name = GetSymbols().GetSymbol(token.text);
+    name = Symbols().GetSymbol(token.text);
     shift();
 }
 
 void VariableRef::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Variable: " << name << "\n";
+    os << Indent(depth) << "Variable: " << Symbols().GetName(name) << "\n";
 }
 
 VariableDef::VariableDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -19,12 +19,12 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
     shift();
 
     lIdentifier::RequireToken(token);
-    name = GetSymbols().AddSymbol(token.text);
+    name = Symbols().AddSymbol(token.text);
     shift();
 }
 
 void VariableDef::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Variable: " << name << "\n";
+    os << Indent(depth) << "Variable: " << Symbols().GetName(name) << "\n";
 }
 
 Arguments::Arguments(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -78,7 +78,7 @@ FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function
 
 void FunctionCall::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "FunctionCall: {\n";
-    os << Indent(depth + 1) << "Name: " << name << "\n";
+    os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Arguments: {\n";
     for (const auto& arg : arguments)
         arg.Print(os, depth + 2);
@@ -109,7 +109,7 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
     } else if (VariableDef::MatchToken(token)) {
         expression = VariableDef(this, token, shift);
     } else {
-        throw ParseError(token, ExpectedToken());
+        throw ParseException(token, ExpectedToken());
     }
 }
 
@@ -156,7 +156,7 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
     lFor::RequireToken(token);
     shift();
 
-    variable = std::make_shared<VariableRef>(this, token, shift);
+    variable = std::make_shared<VariableDef>(this, token, shift);
 
     lIn::RequireToken(token);
     shift();
@@ -192,7 +192,7 @@ Statement::Statement(Node* parent, const Token& token, const std::function<void(
         lSemicolon::RequireToken(token);
         shift();
     } else {
-        throw ParseError(token, Statement::ExpectedToken());
+        throw ParseException(token, Statement::ExpectedToken());
     }
 }
 
@@ -209,7 +209,7 @@ void Statement::Print(std::ostream& os, size_t depth) const {
 }
 
 Block::Block(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(parent->GetSymbols()) {
+    : Node(parent), symbols(&parent->Symbols()) {
     lCurlyOpen::RequireToken(token);
     shift();
 
@@ -223,6 +223,7 @@ Block::Block(Node* parent, const Token& token, const std::function<void()>& shif
 
 void Block::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Block: {\n";
+    os << Indent(depth + 1) << "Symbols: " << symbols << "\n";
     for (const auto& statement : statements) {
         statement.Print(os, depth + 1);
     }
@@ -230,12 +231,12 @@ void Block::Print(std::ostream& os, size_t depth) const {
 }
 
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(parent->GetSymbols()) {
+    : Node(parent), symbols(&parent->Symbols()) {
     lFunc::RequireToken(token);
     shift();
 
     lIdentifier::RequireToken(token);
-    name = GetSymbols().AddSymbol(token.text);
+    name = parent->Symbols().AddSymbol(token.text);
     shift();
 
     arguments = std::make_shared<Arguments>(this, token, shift);
@@ -244,7 +245,8 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "FunctionDef: {\n";
-    os << Indent(depth + 1) << "Name: " << name << "\n";
+    os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     if (arguments != nullptr)
         arguments->Print(os, depth + 1);
     if (block != nullptr)
@@ -261,6 +263,7 @@ Global::Global(const Token& token, const std::function<void()>& shift)
 
 void Global::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Global: {\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     for (const auto& func : functions)
         func.Print(os, depth + 1);
     os << Indent(depth) << "}\n";
