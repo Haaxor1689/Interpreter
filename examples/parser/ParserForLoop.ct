@@ -4,7 +4,7 @@
 func goo(var bbb, var yyy, var ccc) {
     for var aaa in bbb {
         for var xxx in yyy {
-            
+            ccc;
         }
     }
 } # Another comment

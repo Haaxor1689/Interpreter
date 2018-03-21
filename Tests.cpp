@@ -19,9 +19,11 @@ vector<Token> GetTokens(Lexer& lexer) {
     }
 }
 
-void PrintTokens(const vector<Token>& tokens) {
+std::string PrintTokens(const vector<Token>& tokens) {
+    ostringstream oss;
     for (const auto& token : tokens)
-        cout << token << endl;
+        oss << token << endl;
+    return oss.str();
 }
 
 void CreateParser(const std::string& name) {
@@ -32,28 +34,25 @@ void CreateParser(const std::string& name) {
 
 TEST_CASE("Lexer") {
     SECTION("Empty file gives EoF token") {
-        cout << "\nEmpty file gives EoF token\n";
         Lexer lexer("examples/lexer/LexerEmpty.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 1);
         CHECK(tokens[0] == Token("", Token::Type::EoF, 1));
     }
 
     SECTION("File with only a comment") {
-        cout << "\nFile with only a comment\n";
         Lexer lexer("examples/lexer/LexerComment.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 1);
         CHECK(tokens[0] == Token("", Token::Type::EoF, 2));
     }
 
     SECTION("Two identifiers split by space") {
-        cout << "\nTwo identifiers split by space\n";
         Lexer lexer("examples/lexer/LexerTwoIdentifiers.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 3);
         CHECK(tokens[0] == Token("foo", Token::Type::Identifier, 2));
         CHECK(tokens[0] == Token("foo", Token::Type::Identifier, 2));
@@ -61,10 +60,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Number tokens") {
-        cout << "\nNumber tokens\n";
         Lexer lexer("examples/lexer/LexerNumbers.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 4);
         CHECK(tokens[0] == Token("foo2", Token::Type::Identifier, 2));
         CHECK(tokens[1] == Token("2.1", Token::Type::Number, 2));
@@ -72,10 +70,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("String tokens") {
-        cout << "\nString tokens\n";
         Lexer lexer("examples/lexer/LexerStrings.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 6);
         CHECK(tokens[0] == Token("foo", Token::Type::Identifier, 2));
         CHECK(tokens[1] == Token("\"\"", Token::Type::String, 2));
@@ -85,10 +82,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Invalid string tokens") {
-        cout << "\nInvalid string tokens\n";
         Lexer lexer("examples/lexer/LexerInvalidString.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 5);
         CHECK(tokens[0] == Token("foo", Token::Type::Identifier, 2));
         CHECK(tokens[1] == Token("\"2\"", Token::Type::String, 2));
@@ -98,10 +94,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Operators") {
-        cout << "\nOperators\n";
         Lexer lexer("examples/lexer/LexerOperators.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 19);
         CHECK(tokens[1] == Token("+=", Token::Type::BinaryOperator, 2));
         CHECK(tokens[4] == Token("!", Token::Type::UnaryOperator, 3));
@@ -113,10 +108,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Invalid number tokens") {
-        cout << "\nInvalid number tokens\n";
         Lexer lexer("examples/lexer/LexerInvalidNumber.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 6);
         CHECK(tokens[0] == Token("0...", Token::Type::Invalid, 2));
         CHECK(tokens[1] == Token("1.2.3", Token::Type::Invalid, 3));
@@ -126,10 +120,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Parentheses") {
-        cout << "\nParentheses\n";
         Lexer lexer("examples/lexer/LexerParentheses.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 12);
         CHECK(tokens[1] == Token("[", Token::Type::SquareOpen, 2));
         CHECK(tokens[2] == Token("}", Token::Type::CurlyClose, 2));
@@ -139,10 +132,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Keywords") {
-        cout << "\nKeywords\n";
         Lexer lexer("examples/lexer/LexerKeywords.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 13);
         CHECK(tokens[0] == Token("for", Token::Type::For, 2));
         CHECK(tokens[1] == Token("+", Token::Type::BinaryOperator, 2));
@@ -159,10 +151,9 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("More keywords on complex example") {
-        cout << "\nMore keywords on complex example\n";
         Lexer lexer("examples/lexer/LexerComplex.ct");
         auto tokens = GetTokens(lexer);
-        PrintTokens(tokens);
+        INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 42);
         CHECK(tokens[0] == Token("func", Token::Type::Func, 4));
         CHECK(tokens[1] == Token("goo", Token::Type::Identifier, 4));
@@ -198,7 +189,6 @@ TEST_CASE("Lexer") {
 TEST_CASE("Parser") {
     SECTION("Simple parser test") {
         Parser p("examples/parser/ParserSimple.ct");
-
         ostringstream oss;
         oss << p.ast;
         CHECK(oss.str() ==
@@ -222,32 +212,35 @@ TEST_CASE("Parser") {
 
     SECTION("For loop parsing") {
         Parser p("examples/parser/ParserForLoop.ct");
-
         ostringstream oss;
         oss << p.ast;
         CHECK(oss.str() ==
               "Global: {\n"
+              "    Symbols: { 4:goo, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
+              "        Symbols: { 5:bbb, 7:ccc, 6:yyy, }\n"
               "        Arguments: {\n"
-              "            Variable: foo\n"
               "            Variable: bbb\n"
               "            Variable: ccc\n"
               "            Variable: yyy\n"
               "        }\n"
               "        Block: {\n"
+              "            Symbols: { 8:aaa, }\n"
               "            For: {\n"
               "                Variable: aaa\n"
               "                Range: {\n"
               "                    Variable: bbb\n"
               "                }\n"
               "                Block: {\n"
+              "                    Symbols: { 9:xxx, }\n"
               "                    For: {\n"
               "                        Variable: xxx\n"
               "                        Range: {\n"
               "                            Variable: yyy\n"
               "                        }\n"
               "                        Block: {\n"
+              "                            Symbols: { }\n"
               "                            Variable: ccc\n"
               "                        }\n"
               "                    }\n"
