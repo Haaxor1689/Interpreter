@@ -1,0 +1,12 @@
+# If/Else example
+
+func foo(var a) {
+    if a {
+        a;
+    } elseif var b {
+        b;
+    } else {
+        a;
+    }
+    a;
+}

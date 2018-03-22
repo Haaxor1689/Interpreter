@@ -131,24 +131,74 @@ WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void(
 void WhileExpr::Print(std::ostream& os, size_t depth) const {}
 
 Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(&parent->Symbols()) {}
+    : Node(parent), symbols(&parent->Symbols()) {
+    lElse::RequireToken(token);
+    shift();
 
-void Else::Print(std::ostream& os, size_t depth) const {}
+    block = std::make_unique<Block>(this, token, shift);
+}
+
+void Else::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Else: {\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    block->Print(os, depth + 1);
+    os << Indent(depth) << "}\n";
+}
 
 Elseif::Elseif(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(&parent->Symbols()) {}
+    : Node(parent), symbols(&parent->Symbols()) {
+    lElseif::RequireToken(token);
+    shift();
 
-void Elseif::Print(std::ostream& os, size_t depth) const {}
+    condition = std::make_unique<Expression>(this, token, shift);
+    block = std::make_unique<Block>(this, token, shift);
+}
+
+void Elseif::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Elseif: {\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth + 1) << "Condition: {\n";
+    condition->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    block->Print(os, depth + 1);
+    os << Indent(depth) << "}\n";
+}
 
 If::If(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(&parent->Symbols()) {}
+    : Node(parent), symbols(&parent->Symbols()) {
+    lIf::RequireToken(token);
+    shift();
 
-void If::Print(std::ostream& os, size_t depth) const {}
+    condition = std::make_unique<Expression>(this, token, shift);
+    block = std::make_unique<Block>(this, token, shift);
+}
+
+void If::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "If: {\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth + 1) << "Condition: {\n";
+    condition->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    block->Print(os, depth + 1);
+    os << Indent(depth) << "}\n";
+}
 
 IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {}
+    : Node(parent) {
+    ifStatement = std::make_unique<If>(this, token, shift);
+    while (!lElse::MatchToken(token)) {
+        elseifStatements.emplace_back(this, token, shift);
+    }
+    elseStatement = std::make_unique<Else>(this, token, shift);
+}
 
-void IfExpr::Print(std::ostream& os, size_t depth) const {}
+void IfExpr::Print(std::ostream& os, size_t depth) const {
+    ifStatement->Print(os, depth);
+    for (const auto& statement : elseifStatements) {
+        statement.Print(os, depth);
+    }
+    elseStatement->Print(os, depth);
+}
 
 ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent), symbols(&parent->Symbols()) {

@@ -274,6 +274,50 @@ TEST_CASE("Parser") {
               "}\n");
     }
 
+    SECTION("If/Else parsing") {
+        Parser p("examples/parser/ParserIfElse.ct");
+        ostringstream oss;
+        oss << p.Tree();
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    Symbols: { 1:foo, }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 2:a, }\n"
+              "        Arguments: {\n"
+              "            Variable: a\n"
+              "        }\n"
+              "        Block: {\n"
+              "            If: {\n"
+              "                Symbols: { }\n"
+              "                Condition: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "                Block: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "            }\n"
+              "            Elseif: {\n"
+              "                Symbols: { 3:b, }\n"
+              "                Condition: {\n"
+              "                    Variable: b\n"
+              "                }\n"
+              "                Block: {\n"
+              "                    Variable: b\n"
+              "                }\n"
+              "            }\n"
+              "            Else: {\n"
+              "                Symbols: { }\n"
+              "                Block: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "            }\n"
+              "            Variable: a\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
+    }
+
     SECTION("Wrong parser files") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
                           "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
