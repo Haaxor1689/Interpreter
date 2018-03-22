@@ -295,11 +295,10 @@ TEST_CASE("Symbol Table") {
     }
 
     SECTION("Undefined symbol exception") {
-        Parser p("examples/symbols/FunctionDef.ct");
-        INFO(p.Tree());
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedFunc.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowForLoopIdentifierOutside.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "Found undefined identifier a.");
+        CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowOnRedefinition.ct"), "Tried to redefine identifier a.");
     }
 }

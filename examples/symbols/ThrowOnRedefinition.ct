@@ -1,0 +1,5 @@
+# Redefining already defined symbol
+
+func foo(var a, var b) {
+    for var a in b {}
+}
