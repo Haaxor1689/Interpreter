@@ -10,6 +10,8 @@ namespace Interpreter {
 
 class SymbolTable {
     using VarID = unsigned;
+    VarID nextID = 0;
+
     std::map<std::string, VarID> local;
     SymbolTable* parent;
 
@@ -45,9 +47,10 @@ public:
         return ""; // TODO - throw custom exception
     }
 
-    static VarID NextID() {
-        static VarID id = 0;
-        return ++id;
+    VarID NextID() {
+        if (parent != nullptr)
+            return parent->NextID();
+        return ++nextID;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const SymbolTable& symbols) {

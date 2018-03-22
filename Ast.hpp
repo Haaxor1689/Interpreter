@@ -48,6 +48,12 @@ protected:
     Node* parent;
     Node(Node* parent)
         : parent(parent) {}
+
+    Node(const Node&) = delete;
+    Node(Node&&) = delete;
+    Node& operator=(const Node&) = delete;
+    Node& operator=(Node&&) = delete;
+
     virtual ~Node() {}
 
 public:
@@ -104,11 +110,10 @@ public:
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class WhileExpr : public Node,
-                  public RuleGroup<Rule<lWhile, Expression, Block>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {
+class WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {
     bool isDoWhile;
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Block> block;
 
 public:
     WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -116,7 +121,7 @@ public:
 };
 
 class Else : public Node, public Rule<lElse, Block> {
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Block> block;
 
 public:
     Else(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -124,8 +129,8 @@ public:
 };
 
 class Elseif : public Node, public Rule<lElseif, Expression, Block> {
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Block> block;
 
 public:
     Elseif(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -133,8 +138,8 @@ public:
 };
 
 class If : public Node, public Rule<lIf, Expression, Block> {
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Block> block;
 
 public:
     If(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -142,9 +147,9 @@ public:
 };
 
 class IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
-    std::shared_ptr<If> ifStatement;
+    std::unique_ptr<If> ifStatement;
     std::list<Elseif> elseifStatements;
-    std::shared_ptr<Else> elseStatement;
+    std::unique_ptr<Else> elseStatement;
 
 public:
     IfExpr(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -152,9 +157,9 @@ public:
 };
 
 class ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
-    std::shared_ptr<VariableDef> variable;
-    std::shared_ptr<Expression> range;
-    std::shared_ptr<Block> block;
+    std::unique_ptr<VariableDef> variable;
+    std::unique_ptr<Expression> range;
+    std::unique_ptr<Block> block;
 
 public:
     ForExpr(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -181,8 +186,8 @@ public:
 };
 
 class FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {
-    std::shared_ptr<Arguments> arguments;
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Arguments> arguments;
+    std::unique_ptr<Block> block;
     SymbolTable symbols;
 
 public:
@@ -206,19 +211,16 @@ public:
 };
 
 class Ast {
-    std::shared_ptr<Global> root;
+    Global root;
 
 public:
-    Ast() = default;
-    Ast(const Token& token, const std::function<void()>& shift) {
-        root = std::make_shared<Global>(token, shift);
-    }
+    Ast(const Token& token, const std::function<void()>& shift)
+        : root(token, shift) {}
 
-    const Global& Root() const { return *root; }
+    const Global& Root() const { return root; }
 
     friend std::ostream& operator<<(std::ostream& os, const Ast& ast) {
-        if (ast.root != nullptr)
-            ast.root->Print(os, 0);
+        ast.root.Print(os, 0);
         return os;
     }
 };

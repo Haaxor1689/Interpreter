@@ -90,13 +90,12 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
     : Node(parent) {
     if (lIdentifier::MatchToken(token)) {
         lIdentifier::RequireToken(token);
-        expression = VariableRef(this, token, shift);
+        expression.emplace<VariableRef>(this, token, shift);
 
         if (FunctionCall::MatchToken(token)) {
             VarID name = std::get<VariableRef>(expression).name;
-            FunctionCall fc(this, token, shift);
-            fc.name = name;
-            expression = std::move(fc);
+            expression.emplace<FunctionCall>(this, token, shift);
+            std::get<FunctionCall>(expression).name = name;
         }
     } else if (lString::MatchToken(token)) {
         lString::RequireToken(token);
@@ -107,7 +106,7 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
         expression = std::stod(token.text);
         shift();
     } else if (VariableDef::MatchToken(token)) {
-        expression = VariableDef(this, token, shift);
+        expression.emplace<VariableDef>(this, token, shift);
     } else {
         throw ParseException(token, ExpectedToken());
     }
@@ -156,38 +155,35 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
     lFor::RequireToken(token);
     shift();
 
-    variable = std::make_shared<VariableDef>(this, token, shift);
+    variable = std::make_unique<VariableDef>(this, token, shift);
 
     lIn::RequireToken(token);
     shift();
 
-    range = std::make_shared<Expression>(this, token, shift);
-    block = std::make_shared<Block>(this, token, shift);
+    range = std::make_unique<Expression>(this, token, shift);
+    block = std::make_unique<Block>(this, token, shift);
 }
 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "For: {\n";
-    if (variable != nullptr)
-        variable->Print(os, depth + 1);
+    variable->Print(os, depth + 1);
     os << Indent(depth + 1) << "Range: {\n";
-    if (range != nullptr)
-        range->Print(os, depth + 2);
+    range->Print(os, depth + 2);
     os << Indent(depth + 1) << "}\n";
-    if (block != nullptr)
-        block->Print(os, depth + 1);
+    block->Print(os, depth + 1);
     os << Indent(depth) << "}\n";
 }
 
 Statement::Statement(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     if (ForExpr::MatchToken(token)) {
-        expression = ForExpr(this, token, shift);
+        expression.emplace<ForExpr>(this, token, shift);
     } else if (IfExpr::MatchToken(token)) {
-        expression = IfExpr(this, token, shift);
+        expression.emplace<IfExpr>(this, token, shift);
     } else if (WhileExpr::MatchToken(token)) {
-        expression = WhileExpr(this, token, shift);
+        expression.emplace<WhileExpr>(this, token, shift);
     } else if (Expression::MatchToken(token)) {
-        expression = Expression(this, token, shift);
+        expression.emplace<Expression>(this, token, shift);
 
         lSemicolon::RequireToken(token);
         shift();
@@ -239,18 +235,16 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
     name = parent->Symbols().AddSymbol(token.text);
     shift();
 
-    arguments = std::make_shared<Arguments>(this, token, shift);
-    block = std::make_shared<Block>(this, token, shift);
+    arguments = std::make_unique<Arguments>(this, token, shift);
+    block = std::make_unique<Block>(this, token, shift);
 }
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "FunctionDef: {\n";
     os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    if (arguments != nullptr)
-        arguments->Print(os, depth + 1);
-    if (block != nullptr)
-        block->Print(os, depth + 1);
+    arguments->Print(os, depth + 1);
+    block->Print(os, depth + 1);
     os << Indent(depth) << "}\n";
 }
 

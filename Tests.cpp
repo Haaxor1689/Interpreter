@@ -190,7 +190,7 @@ TEST_CASE("Parser") {
     SECTION("Simple parser test") {
         Parser p("examples/parser/ParserSimple.ct");
         ostringstream oss;
-        oss << p.ast;
+        oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
               "    Symbols: { 1:goo, }\n"
@@ -213,27 +213,27 @@ TEST_CASE("Parser") {
     SECTION("For loop parsing") {
         Parser p("examples/parser/ParserForLoop.ct");
         ostringstream oss;
-        oss << p.ast;
+        oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 4:goo, }\n"
+              "    Symbols: { 1:goo, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
-              "        Symbols: { 5:bbb, 7:ccc, 6:yyy, }\n"
+              "        Symbols: { 2:bbb, 4:ccc, 3:yyy, }\n"
               "        Arguments: {\n"
               "            Variable: bbb\n"
-              "            Variable: ccc\n"
               "            Variable: yyy\n"
+              "            Variable: ccc\n"
               "        }\n"
               "        Block: {\n"
-              "            Symbols: { 8:aaa, }\n"
+              "            Symbols: { 5:aaa, }\n"
               "            For: {\n"
               "                Variable: aaa\n"
               "                Range: {\n"
               "                    Variable: bbb\n"
               "                }\n"
               "                Block: {\n"
-              "                    Symbols: { 9:xxx, }\n"
+              "                    Symbols: { 6:xxx, }\n"
               "                    For: {\n"
               "                        Variable: xxx\n"
               "                        Range: {\n"
@@ -255,15 +255,18 @@ TEST_CASE("Parser") {
         Parser p("examples/parser/ParserFunctionCall.ct");
 
         ostringstream oss;
-        oss << p.ast;
+        oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
+              "    Symbols: { 1:goo, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
+              "        Symbols: { 2:a, }\n"
               "        Arguments: {\n"
               "            Variable: a\n"
               "        }\n"
               "        Block: {\n"
+              "            Symbols: { }\n"
               "            FunctionCall: {\n"
               "                Name: goo\n"
               "                Arguments: {\n"
@@ -292,7 +295,7 @@ TEST_CASE("Symbol Table") {
     SECTION("Function names") {
         Parser p("examples/symbols/FunctionDef.ct");
 
-        CHECK(p.ast.Root().Symbols().GetSymbol("foo") == 1);
-        CHECK(p.ast.Root().Symbols().GetSymbol("goo") == 2);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("foo") == 1);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("goo") == 2);
     }
 }
