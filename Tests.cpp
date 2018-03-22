@@ -202,7 +202,6 @@ TEST_CASE("Parser") {
               "            Variable: boo\n"
               "        }\n"
               "        Block: {\n"
-              "            Symbols: { }\n"
               "            String: \"a\"\n"
               "            Double: 1\n"
               "        }\n"
@@ -226,21 +225,20 @@ TEST_CASE("Parser") {
               "            Variable: ccc\n"
               "        }\n"
               "        Block: {\n"
-              "            Symbols: { 5:aaa, }\n"
               "            For: {\n"
+              "                Symbols: { 5:aaa, }\n"
               "                Variable: aaa\n"
               "                Range: {\n"
               "                    Variable: bbb\n"
               "                }\n"
               "                Block: {\n"
-              "                    Symbols: { 6:xxx, }\n"
               "                    For: {\n"
+              "                        Symbols: { 6:xxx, }\n"
               "                        Variable: xxx\n"
               "                        Range: {\n"
               "                            Variable: yyy\n"
               "                        }\n"
               "                        Block: {\n"
-              "                            Symbols: { }\n"
               "                            Variable: ccc\n"
               "                        }\n"
               "                    }\n"
@@ -265,7 +263,6 @@ TEST_CASE("Parser") {
               "            Variable: a\n"
               "        }\n"
               "        Block: {\n"
-              "            Symbols: { }\n"
               "            FunctionCall: {\n"
               "                Name: goo\n"
               "                Arguments: {\n"
@@ -293,12 +290,13 @@ TEST_CASE("Parser") {
 TEST_CASE("Symbol Table") {
     SECTION("Function names") {
         Parser p("examples/symbols/FunctionDef.ct");
-
         CHECK(p.Tree().Root().Symbols().GetSymbol("foo") == 1);
         CHECK(p.Tree().Root().Symbols().GetSymbol("goo") == 2);
     }
 
     SECTION("Undefined symbol exception") {
+        Parser p("examples/symbols/FunctionDef.ct");
+        INFO(p.Tree());
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedFunc.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowForLoopIdentifierOutside.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");

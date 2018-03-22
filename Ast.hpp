@@ -114,35 +114,47 @@ class WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>,
     bool isDoWhile;
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
+    SymbolTable symbols;
 
 public:
     WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
 class Else : public Node, public Rule<lElse, Block> {
     std::unique_ptr<Block> block;
+    SymbolTable symbols;
 
 public:
     Else(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
 class Elseif : public Node, public Rule<lElseif, Expression, Block> {
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
+    SymbolTable symbols;
 
 public:
     Elseif(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
 class If : public Node, public Rule<lIf, Expression, Block> {
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
+    SymbolTable symbols;
 
 public:
     If(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
@@ -160,9 +172,12 @@ class ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Blo
     std::unique_ptr<VariableDef> variable;
     std::unique_ptr<Expression> range;
     std::unique_ptr<Block> block;
+    SymbolTable symbols;
 
 public:
     ForExpr(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
@@ -176,12 +191,9 @@ public:
 
 class Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose> {
     std::list<Statement> statements;
-    SymbolTable symbols;
 
 public:
     Block(Node* parent, const Token& token, const std::function<void()>& shift);
-    SymbolTable& Symbols() override { return symbols; }
-    const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 

@@ -126,22 +126,22 @@ void Expression::Print(std::ostream& os, size_t depth) const {
 }
 
 WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {}
+    : Node(parent), symbols(&parent->Symbols()) {}
 
 void WhileExpr::Print(std::ostream& os, size_t depth) const {}
 
 Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {}
+    : Node(parent), symbols(&parent->Symbols()) {}
 
 void Else::Print(std::ostream& os, size_t depth) const {}
 
 Elseif::Elseif(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {}
+    : Node(parent), symbols(&parent->Symbols()) {}
 
 void Elseif::Print(std::ostream& os, size_t depth) const {}
 
 If::If(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {}
+    : Node(parent), symbols(&parent->Symbols()) {}
 
 void If::Print(std::ostream& os, size_t depth) const {}
 
@@ -151,7 +151,7 @@ IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& sh
 void IfExpr::Print(std::ostream& os, size_t depth) const {}
 
 ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent) {
+    : Node(parent), symbols(&parent->Symbols()) {
     lFor::RequireToken(token);
     shift();
 
@@ -166,6 +166,7 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "For: {\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     variable->Print(os, depth + 1);
     os << Indent(depth + 1) << "Range: {\n";
     range->Print(os, depth + 2);
@@ -205,7 +206,7 @@ void Statement::Print(std::ostream& os, size_t depth) const {
 }
 
 Block::Block(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(&parent->Symbols()) {
+    : Node(parent) {
     lCurlyOpen::RequireToken(token);
     shift();
 
@@ -219,7 +220,6 @@ Block::Block(Node* parent, const Token& token, const std::function<void()>& shif
 
 void Block::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Block: {\n";
-    os << Indent(depth + 1) << "Symbols: " << symbols << "\n";
     for (const auto& statement : statements) {
         statement.Print(os, depth + 1);
     }
