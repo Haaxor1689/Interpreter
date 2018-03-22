@@ -1,0 +1,7 @@
+# Trying to use symbol from another block
+
+func foo(var a) {}
+func goo(var b) {
+    b;
+    a;
+}

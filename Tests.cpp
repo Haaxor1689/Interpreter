@@ -26,8 +26,8 @@ std::string PrintTokens(const vector<Token>& tokens) {
     return oss.str();
 }
 
-void CreateParser(const std::string& name) {
-    Parser p("examples/parser/" + name);
+void TryCreateParser(const std::string& name) {
+    Parser p("examples/" + name);
 }
 
 } // namespace
@@ -253,7 +253,6 @@ TEST_CASE("Parser") {
 
     SECTION("Function call parsing") {
         Parser p("examples/parser/ParserFunctionCall.ct");
-
         ostringstream oss;
         oss << p.Tree();
         CHECK(oss.str() ==
@@ -279,13 +278,13 @@ TEST_CASE("Parser") {
     }
 
     SECTION("Wrong parser files") {
-        CHECK_THROWS_WITH(CreateParser("WrongGlobal.ct"),
+        CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
                           "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
-        CHECK_THROWS_WITH(CreateParser("WrongFuncArg.ct"), "Failed to parse [Identifier 'a' on line 2]. Expected Var.");
-        CHECK_THROWS_WITH(CreateParser("WrongFuncComma.ct"), "Failed to parse [Bracket ')' on line 2]. Expected Var.");
-        CHECK_THROWS_WITH(CreateParser("WrongFuncBlock.ct"),
+        CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncArg.ct"), "Failed to parse [Identifier 'a' on line 2]. Expected Var.");
+        CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncComma.ct"), "Failed to parse [Bracket ')' on line 2]. Expected Var.");
+        CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncBlock.ct"),
                           "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
-        CHECK_THROWS_WITH(CreateParser("WrongStatement.ct"),
+        CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
                           "Failed to parse [Func 'func' on line 3]. Expected one of following { For, If, While, Do, "
                           "Identifier, String, Number, Var, }.");
     }
@@ -297,5 +296,12 @@ TEST_CASE("Symbol Table") {
 
         CHECK(p.Tree().Root().Symbols().GetSymbol("foo") == 1);
         CHECK(p.Tree().Root().Symbols().GetSymbol("goo") == 2);
+    }
+
+    SECTION("Undefined symbol exception") {
+        CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedFunc.ct"), "Found undefined identifier a.");
+        CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowForLoopIdentifierOutside.ct"), "Found undefined identifier a.");
+        CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");
+        CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "Found undefined identifier a.");
     }
 }

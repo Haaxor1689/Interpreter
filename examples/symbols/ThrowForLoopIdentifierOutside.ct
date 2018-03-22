@@ -1,0 +1,9 @@
+# Trying to use for loop identifier outside it's body
+
+func foo(var c) {
+    for var b in c {
+        b;
+    }
+    for var a in c {}
+    a;
+}

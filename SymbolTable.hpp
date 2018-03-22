@@ -44,7 +44,7 @@ public:
             return it->first;
         if (parent != nullptr)
             return parent->GetName(id);
-        return ""; // TODO - throw custom exception
+        throw UndefinedIdentifierNameException(id);
     }
 
     VarID NextID() {

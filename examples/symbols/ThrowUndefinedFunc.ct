@@ -1,0 +1,7 @@
+# Trying to use undefined function
+
+func foo() {}
+func goo() {
+    foo();
+    a();
+}
