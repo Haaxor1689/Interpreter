@@ -318,6 +318,33 @@ TEST_CASE("Parser") {
               "}\n");
     }
 
+    SECTION("If without else") {
+        Parser p("examples/parser/ParserIf.ct");
+        ostringstream oss;
+        oss << p.Tree();
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    Symbols: { 1:foo, }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 2:a, }\n"
+              "        Arguments: {\n"
+              "            Variable: a\n"
+              "        }\n"
+              "        Block: {\n"
+              "            If: {\n"
+              "                Symbols: { }\n"
+              "                Condition: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "                Block: {\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
+    }
+
     SECTION("Wrong parser files") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
                           "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");

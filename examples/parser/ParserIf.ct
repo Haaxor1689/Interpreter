@@ -1,0 +1,5 @@
+# If/Else example
+
+func foo(var a) {
+    if a {}
+}

@@ -141,7 +141,7 @@ Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
 void Else::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Else: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    block->Print(os, depth + 1);
+    block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
@@ -158,9 +158,9 @@ void Elseif::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Elseif: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     os << Indent(depth + 1) << "Condition: {\n";
-    condition->Print(os, depth + 2);
+    condition ? condition->Print(os, depth + 2) : void();
     os << Indent(depth + 1) << "}\n";
-    block->Print(os, depth + 1);
+    block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
@@ -177,15 +177,18 @@ void If::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "If: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     os << Indent(depth + 1) << "Condition: {\n";
-    condition->Print(os, depth + 2);
+    condition ? condition->Print(os, depth + 2) : void();
     os << Indent(depth + 1) << "}\n";
-    block->Print(os, depth + 1);
+    block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
 IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     ifStatement = std::make_unique<If>(this, token, shift);
+    if (!lElse::MatchToken(token) && !lElseif::MatchToken(token))
+        return;
+
     while (!lElse::MatchToken(token)) {
         elseifStatements.emplace_back(this, token, shift);
     }
@@ -197,7 +200,7 @@ void IfExpr::Print(std::ostream& os, size_t depth) const {
     for (const auto& statement : elseifStatements) {
         statement.Print(os, depth);
     }
-    elseStatement->Print(os, depth);
+    elseStatement ? elseStatement->Print(os, depth) : void();
 }
 
 ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -217,11 +220,11 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "For: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    variable->Print(os, depth + 1);
+    variable ? variable->Print(os, depth + 1) : void();
     os << Indent(depth + 1) << "Range: {\n";
-    range->Print(os, depth + 2);
+    range ? range->Print(os, depth + 2) : void();
     os << Indent(depth + 1) << "}\n";
-    block->Print(os, depth + 1);
+    block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
@@ -293,8 +296,8 @@ void FunctionDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "FunctionDef: {\n";
     os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    arguments->Print(os, depth + 1);
-    block->Print(os, depth + 1);
+    arguments ? arguments->Print(os, depth + 1) : void();
+    arguments ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
