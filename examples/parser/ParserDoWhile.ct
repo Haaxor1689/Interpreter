@@ -1,0 +1,5 @@
+# Do While example
+
+func foo(var a) {
+    do {} while a;
+}

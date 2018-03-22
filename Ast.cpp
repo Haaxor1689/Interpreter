@@ -126,9 +126,39 @@ void Expression::Print(std::ostream& os, size_t depth) const {
 }
 
 WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent), symbols(&parent->Symbols()) {}
+    : Node(parent), symbols(&parent->Symbols()) {
+    if ((isDoWhile = lDo::MatchToken(token))) {
+        lDo::RequireToken(token);
+        shift();
 
-void WhileExpr::Print(std::ostream& os, size_t depth) const {}
+        block = std::make_unique<Block>(this, token, shift);
+
+        lWhile::RequireToken(token);
+        shift();
+
+        condition = std::make_unique<Expression>(this, token, shift);
+
+        lSemicolon::RequireToken(token);
+        shift();
+        return;
+    }
+
+    lWhile::RequireToken(token);
+    shift();
+
+    condition = std::make_unique<Expression>(this, token, shift);
+    block = std::make_unique<Block>(this, token, shift);
+}
+
+void WhileExpr::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << (isDoWhile ? "DoWhile: {\n" : "While: {\n");
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth + 1) << "Condition: {\n";
+    condition ? condition->Print(os, depth + 2) : void();
+    os << Indent(depth + 1) << "}\n";
+    block ? block->Print(os, depth + 1) : void();
+    os << Indent(depth) << "}\n";
+}
 
 Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent), symbols(&parent->Symbols()) {
