@@ -99,7 +99,7 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
         }
     } else if (lString::MatchToken(token)) {
         lString::RequireToken(token);
-        expression = token.text;
+        expression = token.text.substr(1, token.text.size() - 2);
         shift();
     } else if (lTrue::MatchToken(token)) {
         lTrue::RequireToken(token);
@@ -128,7 +128,7 @@ void Expression::Print(std::ostream& os, size_t depth) const {
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
             [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "true" : "false") << "\n"; },
             [&, depth](double arg) { os << Indent(depth) << "Double: " << arg << "\n"; },
-            [&, depth](const std::string& arg) { os << Indent(depth) << "String: " << arg << "\n"; },
+            [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
         },
         expression);
