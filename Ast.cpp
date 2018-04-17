@@ -2,6 +2,23 @@
 
 namespace Interpreter {
 
+VariableAssign::VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent) {
+    lBinaryOperator::RequireToken(token);
+    shift();
+
+    value = std::make_unique<Expression>(this, token, shift);
+}
+
+void VariableAssign::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Assignment: {\n";
+    os << Indent(depth + 1) << "Variable: " << Symbols().GetName(name) << "\n";
+    os << Indent(depth + 1) << "Value: {\n";
+    value->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth) << "}\n";
+}
+
 VariableRef::VariableRef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     lIdentifier::RequireToken(token);
@@ -21,10 +38,23 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
     lIdentifier::RequireToken(token);
     name = Symbols().AddSymbol(token.text);
     shift();
+
+    if (lBinaryOperator::MatchToken(token) && token.text == "=") {
+        shift();
+
+        value = std::make_unique<Expression>(this, token, shift);
+    }
 }
 
 void VariableDef::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Variable: " << Symbols().GetName(name) << "\n";
+    os << Indent(depth) << "Definition: {\n";
+    os << Indent(depth + 1) << "Variable: " << Symbols().GetName(name) << "\n";
+    if (value) {
+        os << Indent(depth + 1) << "Value: {\n";
+        value->Print(os, depth + 2);
+        os << Indent(depth + 1) << "}\n";
+    }
+    os << Indent(depth) << "}\n";
 }
 
 Arguments::Arguments(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -96,6 +126,10 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
             VarID name = std::get<VariableRef>(expression).name;
             expression.emplace<FunctionCall>(this, token, shift);
             std::get<FunctionCall>(expression).name = name;
+        } else if (VariableAssign::MatchToken(token)) {
+            VarID name = std::get<VariableRef>(expression).name;
+            expression.emplace<VariableAssign>(this, token, shift);
+            std::get<VariableAssign>(expression).name = name;
         }
     } else if (lString::MatchToken(token)) {
         lString::RequireToken(token);
@@ -126,6 +160,7 @@ void Expression::Print(std::ostream& os, size_t depth) const {
             [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
+            [&, depth](const VariableAssign& arg) { arg.Print(os, depth); },
             [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "true" : "false") << "\n"; },
             [&, depth](double arg) { os << Indent(depth) << "Double: " << arg << "\n"; },
             [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },

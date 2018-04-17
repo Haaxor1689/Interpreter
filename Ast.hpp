@@ -56,6 +56,8 @@ using lComma = TokenType<Token::Type::Comma>;
 using lReturn = TokenType<Token::Type::Return>;
 using lTrue = TokenType<Token::Type::True>;
 using lFalse = TokenType<Token::Type::False>;
+using lUnaryOperator = TokenType<Token::Type::UnaryOperator>;
+using lBinaryOperator = TokenType<Token::Type::BinaryOperator>;
 
 struct Block;
 struct Expression;
@@ -85,6 +87,14 @@ public:
     }
 };
 
+struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
+    VarID name;
+    std::unique_ptr<Expression> value;
+
+    VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+};
+
 struct VariableRef : public Node, public Rule<lIdentifier> {
     VarID name;
 
@@ -94,6 +104,7 @@ struct VariableRef : public Node, public Rule<lIdentifier> {
 
 struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
     VarID name;
+    std::unique_ptr<Expression> value;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -115,7 +126,7 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
 };
 
 struct Expression : public Node, public RuleGroup<lIdentifier, lString, lNumber, VariableDef> {
-    std::variant<std::monostate, VariableRef, FunctionCall, bool, double, std::string, VariableDef> expression;
+    std::variant<std::monostate, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;

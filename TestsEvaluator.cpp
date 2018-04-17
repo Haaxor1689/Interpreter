@@ -29,5 +29,7 @@ TEST_CASE("Evaluator") {
 
     SECTION("If Statement") {
         Parser p("examples/evaluator/IfExample.ct");
+        CHECK(std::get<double>(p.Evaluate("foo", { true })) == 1.0);
+        CHECK(std::get<double>(p.Evaluate("foo", { false })) == 0.0);
     }
 }

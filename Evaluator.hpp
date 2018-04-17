@@ -12,6 +12,7 @@ class Evaluator {
     std::map<VarID, Value> localValues;
     Evaluator* parent;
     const Global& root;
+    bool didHitReturn = false;
 
     Evaluator(Evaluator* parent, const Global& root)
         : parent(parent), root(root) {}
@@ -47,16 +48,25 @@ private:
     }
 
     Value Evaluate(const Block& node) {
-        bool didHitReturn = false;
         for (const Statement& statement : node.statements) {
             Value value = std::visit(
                 Visitor{
                     [&](const auto&) { return Value(); },
                     [&](const Return& arg) { didHitReturn = true; return Evaluate(*arg.value); },
-                    [&](const ForExpr& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
-                    [&](const IfExpr& arg) { Evaluate(arg); return Value(); },
-                    [&](const WhileExpr& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
-                    [&](const Expression& arg) { Evaluate(arg); return Value(); },
+                    [&](const ForExpr& arg) {
+                        auto eval = Evaluator(this, root);
+                        auto value = eval.Evaluate(arg);
+                        didHitReturn = eval.didHitReturn;
+                        return value;
+                    },
+                    [&](const IfExpr& arg) { return Evaluate(arg); },
+                    [&](const WhileExpr& arg) {
+                        auto eval = Evaluator(this, root);
+                        auto value = eval.Evaluate(arg);
+                        didHitReturn = eval.didHitReturn;
+                        return value;
+                    },
+                    [&](const Expression& arg) { return Evaluate(arg); },
                 },
                 statement.expression);
             if (didHitReturn)
@@ -65,29 +75,39 @@ private:
         return Value();
     }
 
-    void Evaluate(const ForExpr&) {
+    Value Evaluate(const ForExpr&) {
+        return Value();
     }
 
-    void Evaluate(const IfExpr& node) {
+    Value Evaluate(const IfExpr& node) {
         auto ifEval = Evaluator(this, root);
         if (std::get<bool>(ifEval.Evaluate(*node.ifStatement->condition))) {
-            ifEval.Evaluate(*node.ifStatement->block);
+            auto value = ifEval.Evaluate(*node.ifStatement->block);
+            didHitReturn = ifEval.didHitReturn;
+            return value;
         }
 
         for (const auto& elsif : node.elseifStatements) {
             auto elseifEval = Evaluator(this, root);
             if (std::get<bool>(elseifEval.Evaluate(*elsif.condition))) {
-                elseifEval.Evaluate(*node.ifStatement->block);
-                return;
+                auto value = elseifEval.Evaluate(*node.ifStatement->block);
+                didHitReturn = elseifEval.didHitReturn;
+                return value;
             }
         }
 
         if (node.elseStatement) {
-            Evaluator(this, root).Evaluate(*node.elseStatement->block);
+            auto elseEval = Evaluator(this, root);
+            auto value = elseEval.Evaluate(*node.elseStatement->block);
+            didHitReturn = elseEval.didHitReturn;
+            return value;
         }
+
+        return Value();
     }
 
-    void Evaluate(const WhileExpr&) {
+    Value Evaluate(const WhileExpr&) {
+        return Value();
     }
 
     Value Evaluate(const Expression& node) {
@@ -121,7 +141,7 @@ private:
     }
 
     Value Evaluate(const VariableDef& node) {
-        localValues.emplace(node.name, Value());
+        localValues.emplace(node.name, node.value ? Evaluate(*node.value) : Value());
         return GetValue(node.name);
     }
 };
