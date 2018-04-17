@@ -24,7 +24,7 @@ using Value = std::variant<std::monostate, bool, double, std::string>;
 inline std::ostream& operator<<(std::ostream& os, const Value& val) {
     std::visit(
         Visitor{
-            [&](const auto&) { os << "Null"; },
+            [&](const auto&) { os << "Void"; },
             [&](bool arg) { os << (arg ? "True" : "False"); },
             [&](double arg) { os << arg; },
             [&](const std::string& arg) { os << arg; },

@@ -254,6 +254,54 @@ TEST_CASE("Parser") {
               "}\n");
     }
 
+    SECTION("Assignment parsing") {
+        Parser p("examples/parser/ParserAssignment.ct");
+        ostringstream oss;
+        oss << p.Tree();
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    Symbols: { 2:foo, 1:goo, }\n"
+              "    FunctionDef: {\n"
+              "        Name: goo\n"
+              "        Symbols: { }\n"
+              "        Arguments: {\n"
+              "        }\n"
+              "        Block: {\n"
+              "        }\n"
+              "    }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 3:a, 4:b, 5:c, }\n"
+              "        Arguments: {\n"
+              "            Definition: {\n"
+              "                Variable: a\n"
+              "            }\n"
+              "        }\n"
+              "        Block: {\n"
+              "            Definition: {\n"
+              "                Variable: b\n"
+              "                Value: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "            }\n"
+              "            Definition: {\n"
+              "                Variable: c\n"
+              "            }\n"
+              "            Assignment: {\n"
+              "                Variable: c\n"
+              "                Value: {\n"
+              "                    FunctionCall: {\n"
+              "                        Name: goo\n"
+              "                        Arguments: {\n"
+              "                        }\n"
+              "                    }\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
+    }
+
     SECTION("Wrong parser files") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
                           "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");

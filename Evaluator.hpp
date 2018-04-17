@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    Value GetValue(VarID variable) {
+    Value& GetValue(VarID variable) {
         auto ptr = this;
         while (ptr) {
             auto it = ptr->localValues.find(variable);
@@ -116,6 +116,7 @@ private:
                 [&](const auto&) { return Value(); },
                 [&](const VariableRef& arg) { return GetValue(arg.name); },
                 [&](const FunctionCall& arg) { return Evaluate(arg); },
+                [&](const VariableAssign& arg) { return Evaluate(arg); },
                 [&](bool arg) { return Value(arg); },
                 [&](double arg) { return Value(arg); },
                 [&](const std::string& arg) { return Value(arg); },
@@ -143,6 +144,12 @@ private:
     Value Evaluate(const VariableDef& node) {
         localValues.emplace(node.name, node.value ? Evaluate(*node.value) : Value());
         return GetValue(node.name);
+    }
+
+    Value Evaluate(const VariableAssign& node) {
+        auto& value = GetValue(node.name);
+        value = Evaluate(*node.value);
+        return value;
     }
 };
 

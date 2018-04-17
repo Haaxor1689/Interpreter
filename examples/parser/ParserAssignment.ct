@@ -1,0 +1,7 @@
+# Assignment example
+func goo() {}
+func foo(var a) {
+    var b = a;
+    var c;
+    c = goo();
+}

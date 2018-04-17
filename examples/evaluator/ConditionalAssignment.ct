@@ -1,0 +1,7 @@
+func foo(var arg) {
+    var ret;
+    if arg {
+        ret = 1;
+    }
+    return ret;
+} 
