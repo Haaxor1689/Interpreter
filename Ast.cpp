@@ -101,6 +101,14 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
         lString::RequireToken(token);
         expression = token.text;
         shift();
+    } else if (lTrue::MatchToken(token)) {
+        lTrue::RequireToken(token);
+        expression = true;
+        shift();
+    } else if (lFalse::MatchToken(token)) {
+        lFalse::RequireToken(token);
+        expression = false;
+        shift();
     } else if (lNumber::MatchToken(token)) {
         lNumber::RequireToken(token);
         expression = std::stod(token.text);
@@ -115,11 +123,12 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
 void Expression::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
-            [&, depth](auto) { os << Indent(depth) << "Unknown expression\n"; },
+            [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
-            [&, depth](const std::string& arg) { os << Indent(depth) << "String: " << arg << "\n"; },
+            [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "true" : "false") << "\n"; },
             [&, depth](double arg) { os << Indent(depth) << "Double: " << arg << "\n"; },
+            [&, depth](const std::string& arg) { os << Indent(depth) << "String: " << arg << "\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
         },
         expression);
@@ -258,9 +267,28 @@ void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
+Return::Return(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent) {
+    lReturn::RequireToken(token);
+    shift();
+
+    value = std::make_unique<Expression>(this, token, shift);
+
+    lSemicolon::RequireToken(token);
+    shift();
+}
+
+void Return::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Return: {\n";
+    value ? value->Print(os, depth + 1) : void();
+    os << Indent(depth) << "}\n";
+}
+
 Statement::Statement(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
-    if (ForExpr::MatchToken(token)) {
+    if (Return::MatchToken(token)) {
+        expression.emplace<Return>(this, token, shift);
+    } else if (ForExpr::MatchToken(token)) {
         expression.emplace<ForExpr>(this, token, shift);
     } else if (IfExpr::MatchToken(token)) {
         expression.emplace<IfExpr>(this, token, shift);
@@ -279,7 +307,8 @@ Statement::Statement(Node* parent, const Token& token, const std::function<void(
 void Statement::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
-            [&, depth](auto) { os << Indent(depth) << "Unknown statement\n"; },
+            [&, depth](const auto&) { os << Indent(depth) << "Unknown statement\n"; },
+            [&, depth](const Return& arg) { arg.Print(os, depth); },
             [&, depth](const ForExpr& arg) { arg.Print(os, depth); },
             [&, depth](const IfExpr& arg) { arg.Print(os, depth); },
             [&, depth](const WhileExpr& arg) { arg.Print(os, depth); },

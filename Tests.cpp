@@ -407,7 +407,7 @@ TEST_CASE("Parser") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncBlock.ct"),
                           "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
-                          "Failed to parse [Func 'func' on line 3]. Expected one of following { For, If, While, Do, "
+                          "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, "
                           "Identifier, String, Number, Var, }.");
     }
 }
@@ -425,5 +425,27 @@ TEST_CASE("Symbol Table") {
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "Found undefined identifier a.");
         CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowOnRedefinition.ct"), "Tried to redefine identifier a.");
+    }
+}
+
+TEST_CASE("Evaluator") {
+    SECTION("Simple functions") {
+        Parser p("examples/evaluator/Empty.ct");
+        auto retP = p.Evaluate("foo", {});
+        ostringstream oss;
+        oss << retP;
+        CHECK(oss.str() == "Null");
+
+        Parser q("examples/evaluator/BoolReturn.ct");
+        auto retQ = std::get<bool>(q.Evaluate("foo", {}));
+        CHECK(retQ == true);
+
+        Parser r("examples/evaluator/DoubleReturn.ct");
+        auto retR = std::get<double>(r.Evaluate("foo", {}));
+        CHECK(retR == 12.4);
+
+        Parser s("examples/evaluator/StringReturn.ct");
+        auto retS = std::get<std::string>(s.Evaluate("foo", {}));
+        CHECK(retS == "Test");
     }
 }

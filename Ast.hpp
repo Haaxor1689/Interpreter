@@ -11,7 +11,27 @@
 
 namespace Interpreter {
 
+// Helper class for variant visiting
+template <class... Ts>
+struct Visitor : Ts... { using Ts::operator()...; };
+template <class... Ts>
+Visitor(Ts...)->Visitor<Ts...>;
+
 using VarID = unsigned;
+using Value = std::variant<std::monostate, bool, double, std::string>;
+
+// Output operator for Value type
+inline std::ostream& operator<<(std::ostream& os, const Value& val) {
+    std::visit(
+        Visitor{
+            [&](const auto&) { os << "Null"; },
+            [&](bool arg) { os << (arg ? "True" : "False"); },
+            [&](double arg) { os << arg; },
+            [&](const std::string& arg) { os << arg; },
+        },
+        val);
+    return os;
+}
 
 // Literals
 using lEoF = TokenType<Token::Type::EoF>;
@@ -33,15 +53,12 @@ using lWhile = TokenType<Token::Type::While>;
 using lDo = TokenType<Token::Type::Do>;
 using lVar = TokenType<Token::Type::Var>;
 using lComma = TokenType<Token::Type::Comma>;
+using lReturn = TokenType<Token::Type::Return>;
+using lTrue = TokenType<Token::Type::True>;
+using lFalse = TokenType<Token::Type::False>;
 
 struct Block;
 struct Expression;
-
-// Helper class for variant visiting
-template <class... Ts>
-struct Visitor : Ts... { using Ts::operator()...; };
-template <class... Ts>
-Visitor(Ts...)->Visitor<Ts...>;
 
 struct Node {
 protected:
@@ -68,142 +85,133 @@ public:
     }
 };
 
-class VariableRef : public Node, public Rule<lIdentifier> {
-public:
+struct VariableRef : public Node, public Rule<lIdentifier> {
     VarID name;
 
     VariableRef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class VariableDef : public Node, public Rule<lVar, lIdentifier> {
-public:
+struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
     VarID name;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
+struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
     std::list<VariableDef> arguments;
 
-public:
     Arguments(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression, lComma>>, lParenClose> {
-    std::list<Expression> arguments;
-
-public:
+struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression, lComma>>, lParenClose> {
     VarID name;
+    std::list<Expression> arguments;
 
     FunctionCall(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Expression : public Node, public RuleGroup<lIdentifier, lString, lNumber, VariableDef> {
-    std::variant<std::monostate, VariableRef, FunctionCall, std::string, double, VariableDef> expression;
+struct Expression : public Node, public RuleGroup<lIdentifier, lString, lNumber, VariableDef> {
+    std::variant<std::monostate, VariableRef, FunctionCall, bool, double, std::string, VariableDef> expression;
 
-public:
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {
+struct WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {
     bool isDoWhile;
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
-public:
     WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Else : public Node, public Rule<lElse, Block> {
+struct Else : public Node, public Rule<lElse, Block> {
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
-public:
     Else(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Elseif : public Node, public Rule<lElseif, Expression, Block> {
+struct Elseif : public Node, public Rule<lElseif, Expression, Block> {
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
-public:
     Elseif(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class If : public Node, public Rule<lIf, Expression, Block> {
+struct If : public Node, public Rule<lIf, Expression, Block> {
     std::unique_ptr<Expression> condition;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
-public:
     If(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
+struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
     std::unique_ptr<If> ifStatement;
     std::list<Elseif> elseifStatements;
     std::unique_ptr<Else> elseStatement;
 
-public:
     IfExpr(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
+struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
     std::unique_ptr<VariableDef> variable;
     std::unique_ptr<Expression> range;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
-public:
     ForExpr(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Statement : public Node, public RuleGroup<ForExpr, IfExpr, WhileExpr, Rule<Expression, lSemicolon>> {
-    std::variant<std::monostate, ForExpr, IfExpr, WhileExpr, Expression> expression;
+struct Return : public Node, public Rule<lReturn, Expression> {
+    std::unique_ptr<Expression> value;
 
-public:
+    Return(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+};
+
+struct Statement : public Node, public RuleGroup<Return, ForExpr, IfExpr, WhileExpr, Rule<Expression, lSemicolon>> {
+    std::variant<std::monostate, Return, ForExpr, IfExpr, WhileExpr, Expression> expression;
+
     Statement(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose> {
+struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose> {
     std::list<Statement> statements;
 
-public:
     Block(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {
+struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {
+    VarID name;
     std::unique_ptr<Arguments> arguments;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
-
-public:
-    VarID name;
 
     FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
@@ -211,15 +219,28 @@ public:
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-class Global : public Node, public Rule<List<FunctionDef>, lEoF> {
+struct Global : public Node, public Rule<List<FunctionDef>, lEoF> {
     std::list<FunctionDef> functions;
     SymbolTable symbols;
 
-public:
     Global(const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
+
+    const FunctionDef& GetFunction(const std::string& name) const {
+        return GetFunction(symbols.GetSymbol(name));
+    }
+
+    const FunctionDef& GetFunction(VarID funcId) const {
+        auto it = std::find_if(functions.begin(), functions.end(), [funcId](const FunctionDef& val) {
+            return val.name == funcId;
+        });
+        if (it == functions.end()) {
+            throw UndefinedIdentifierNameException(funcId);
+        }
+        return *it;
+    }
 };
 
 class Ast {
