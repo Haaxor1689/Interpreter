@@ -34,17 +34,29 @@ public:
     }
 
 private:
+    Value GetValue(VarID variable) {
+        auto ptr = this;
+        while (ptr) {
+            auto it = ptr->localValues.find(variable);
+            if (it != ptr->localValues.end()) {
+                return it->second;
+            }
+            ptr = ptr->parent;
+        }
+        throw std::runtime_error("Variable with id " + std::to_string(variable) + " not found.");
+    }
+
     Value Evaluate(const Block& node) {
         bool didHitReturn = false;
         for (const Statement& statement : node.statements) {
             Value value = std::visit(
                 Visitor{
                     [&](const auto&) { return Value(); },
-                    [&](const Return& arg) { didHitReturn = true; return Evaluator(this, root).Evaluate(*arg.value); },
+                    [&](const Return& arg) { didHitReturn = true; return Evaluate(*arg.value); },
                     [&](const ForExpr& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
-                    [&](const IfExpr& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
+                    [&](const IfExpr& arg) { Evaluate(arg); return Value(); },
                     [&](const WhileExpr& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
-                    [&](const Expression& arg) { Evaluator(this, root).Evaluate(arg); return Value(); },
+                    [&](const Expression& arg) { Evaluate(arg); return Value(); },
                 },
                 statement.expression);
             if (didHitReturn)
@@ -57,13 +69,15 @@ private:
     }
 
     void Evaluate(const IfExpr& node) {
-        if (std::get<bool>(Evaluator(this, root).Evaluate(*node.ifStatement->condition))) {
-            Evaluator(this, root).Evaluate(*node.ifStatement->block);
+        auto ifEval = Evaluator(this, root);
+        if (std::get<bool>(ifEval.Evaluate(*node.ifStatement->condition))) {
+            ifEval.Evaluate(*node.ifStatement->block);
         }
 
         for (const auto& elsif : node.elseifStatements) {
-            if (std::get<bool>(Evaluator(this, root).Evaluate(*elsif.condition))) {
-                Evaluator(this, root).Evaluate(*node.ifStatement->block);
+            auto elseifEval = Evaluator(this, root);
+            if (std::get<bool>(elseifEval.Evaluate(*elsif.condition))) {
+                elseifEval.Evaluate(*node.ifStatement->block);
                 return;
             }
         }
@@ -80,12 +94,12 @@ private:
         return std::visit(
             Visitor{
                 [&](const auto&) { return Value(); },
-                [&](const VariableRef& arg) { return localValues[arg.name]; },
-                [&](const FunctionCall& arg) { return Evaluator(this, root).Evaluate(arg); },
+                [&](const VariableRef& arg) { return GetValue(arg.name); },
+                [&](const FunctionCall& arg) { return Evaluate(arg); },
                 [&](bool arg) { return Value(arg); },
                 [&](double arg) { return Value(arg); },
                 [&](const std::string& arg) { return Value(arg); },
-                [&](const VariableDef& arg) { return Evaluator(this, root).Evaluate(arg); },
+                [&](const VariableDef& arg) { return Evaluate(arg); },
             },
             node.expression);
     }
@@ -96,11 +110,11 @@ private:
             throw std::runtime_error("Wrong number of arguments.");
         }
 
-        Evaluator eval(nullptr, root);
+        Evaluator eval(this, root);
         auto inIt = node.arguments.begin();
         auto argIt = func.arguments->arguments.begin();
         for (; inIt != node.arguments.end(); ++inIt, ++argIt) {
-            eval.localValues.emplace(argIt->name, Evaluator(this, root).Evaluate(*inIt));
+            eval.localValues.emplace(argIt->name, Evaluate(*inIt));
         }
 
         return eval.Evaluate(*func.block.get());
@@ -108,7 +122,7 @@ private:
 
     Value Evaluate(const VariableDef& node) {
         localValues.emplace(node.name, Value());
-        return localValues[node.name];
+        return GetValue(node.name);
     }
 };
 

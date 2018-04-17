@@ -18,7 +18,7 @@ public:
         : lexer(path), token(lexer.Next()), ast(token, [this]() { token = lexer.Next(); }) {}
 
     const Ast& Tree() const { return ast; }
-    Value Evaluate(const std::string function, const std::list<Value>& arguments) {
+    Value Evaluate(const std::string function, const std::list<Value>& arguments = {}) {
         try {
             return Evaluator::Evaluate(ast.Root(), function, arguments);
         } catch (const std::exception& ex) {

@@ -10,21 +10,24 @@ using namespace Interpreter;
 TEST_CASE("Evaluator") {
     SECTION("Simple functions") {
         Parser p("examples/evaluator/Empty.ct");
-        auto retP = p.Evaluate("foo", {});
-        ostringstream oss;
-        oss << retP;
-        CHECK(oss.str() == "Null");
+        CHECK(std::holds_alternative<std::monostate>(p.Evaluate("foo", {})));
 
         Parser q("examples/evaluator/BoolReturn.ct");
-        auto retQ = std::get<bool>(q.Evaluate("foo", {}));
-        CHECK(retQ == true);
+        CHECK(std::get<bool>(q.Evaluate("foo")) == true);
 
         Parser r("examples/evaluator/DoubleReturn.ct");
-        auto retR = std::get<double>(r.Evaluate("foo", {}));
-        CHECK(retR == 12.4);
+        CHECK(std::get<double>(r.Evaluate("foo")) == 12.4);
 
         Parser s("examples/evaluator/StringReturn.ct");
-        auto retS = std::get<std::string>(s.Evaluate("foo", {}));
-        CHECK(retS == "Test");
+        CHECK(std::get<std::string>(s.Evaluate("foo")) == "Test");
+
+        Parser t("examples/evaluator/ArgumentReturn.ct");
+        CHECK(std::get<bool>(t.Evaluate("foo", { true })) == true);
+        CHECK(std::get<double>(t.Evaluate("foo", { 123.0 })) == 123.0);
+        CHECK(std::get<std::string>(t.Evaluate("foo", { std::string("goo") })) == "goo");
+    }
+
+    SECTION("If Statement") {
+        Parser p("examples/evaluator/IfExample.ct");
     }
 }
