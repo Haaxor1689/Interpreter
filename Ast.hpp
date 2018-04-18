@@ -5,7 +5,6 @@
 #include <functional>
 #include <list>
 
-#include "Grammar.hpp"
 #include "Rule.hpp"
 #include "SymbolTable.hpp"
 
@@ -87,6 +86,15 @@ public:
     }
 };
 
+struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, Expression> {
+    std::unique_ptr<Expression> lhs;
+    std::unique_ptr<Expression> rhs;
+    std::string operation;
+
+    BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+};
+
 struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
     VarID name;
     std::unique_ptr<Expression> value;
@@ -125,8 +133,8 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-struct Expression : public Node, public RuleGroup<lIdentifier, lString, lNumber, VariableDef> {
-    std::variant<std::monostate, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
+struct Expression : public Node, public RuleGroup<BinaryOperation, VariableRef, lTrue, lFalse, lNumber, lString, VariableDef> {
+    std::variant<std::monostate, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;

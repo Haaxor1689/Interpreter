@@ -2,6 +2,28 @@
 
 namespace Interpreter {
 
+BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent) {
+    lBinaryOperator::RequireToken(token);
+    operation = token.text;
+    shift();
+
+    lhs = std::make_unique<Expression>(this, token, shift);
+    rhs = std::make_unique<Expression>(this, token, shift);
+}
+
+void BinaryOperation::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "BinaryOperation: {\n";
+    os << Indent(depth + 1) << "Operator: " << operation << "\n";
+    os << Indent(depth + 1) << "Lhs: {\n";
+    lhs->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "Rhs: {\n";
+    rhs->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth) << "}\n";
+}
+
 VariableAssign::VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     lBinaryOperator::RequireToken(token);
@@ -118,7 +140,10 @@ void FunctionCall::Print(std::ostream& os, size_t depth) const {
 
 Expression::Expression(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
-    if (lIdentifier::MatchToken(token)) {
+    if (lBinaryOperator::MatchToken(token)) {
+        lBinaryOperator::RequireToken(token);
+        expression.emplace<BinaryOperation>(this, token, shift);
+    } else if (lIdentifier::MatchToken(token)) {
         lIdentifier::RequireToken(token);
         expression.emplace<VariableRef>(this, token, shift);
 
@@ -158,6 +183,7 @@ void Expression::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
             [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
+            [&, depth](const BinaryOperation& arg) { arg.Print(os, depth); },
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
             [&, depth](const VariableAssign& arg) { arg.Print(os, depth); },

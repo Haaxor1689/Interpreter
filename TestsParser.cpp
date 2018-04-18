@@ -302,6 +302,47 @@ TEST_CASE("Parser") {
               "}\n");
     }
 
+    SECTION("Operators parser") {
+        Parser p("examples/parser/ParserOperators.ct");
+        ostringstream oss;
+        oss << p.Tree();
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    Symbols: { 1:foo, }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 2:a, }\n"
+              "        Arguments: {\n"
+              "        }\n"
+              "        Block: {\n"
+              "            Definition: {\n"
+              "                Variable: a\n"
+              "                Value: {\n"
+              "                    BinaryOperation: {\n"
+              "                        Operator: +\n"
+              "                        Lhs: {\n"
+              "                            Double: 1\n"
+              "                        }\n"
+              "                        Rhs: {\n"
+              "                            Double: 2\n"
+              "                        }\n"
+              "                    }\n"
+              "                }\n"
+              "            }\n"
+              "            BinaryOperation: {\n"
+              "                Operator: -=\n"
+              "                Lhs: {\n"
+              "                    Variable: a\n"
+              "                }\n"
+              "                Rhs: {\n"
+              "                    Double: 2\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
+    }
+
     SECTION("Wrong parser files") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
                           "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
@@ -311,6 +352,6 @@ TEST_CASE("Parser") {
                           "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
                           "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, "
-                          "Identifier, String, Number, Var, }.");
+                          "Binary Operator, Identifier, True, False, Number, String, Var, }.");
     }
 }
