@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "Ast.hpp"
+#include "ValueOperators.hpp"
 
 namespace Interpreter {
 
@@ -114,6 +115,7 @@ private:
         return std::visit(
             Visitor{
                 [&](const auto&) { return Value(); },
+                [&](const BinaryOperation& arg) { return Evaluate(arg); },
                 [&](const VariableRef& arg) { return GetValue(arg.name); },
                 [&](const FunctionCall& arg) { return Evaluate(arg); },
                 [&](const VariableAssign& arg) { return Evaluate(arg); },
@@ -150,6 +152,37 @@ private:
         auto& value = GetValue(node.name);
         value = Evaluate(*node.value);
         return value;
+    }
+
+    Value Evaluate(const BinaryOperation& node) {
+        if (node.operation == "==") {
+            return Value(Evaluate(*node.lhs) == Evaluate(*node.rhs));
+        } else if (node.operation == "!=") {
+            return Value(Evaluate(*node.lhs) != Evaluate(*node.rhs));
+        } else if (node.operation == "<") {
+            return Value(Evaluate(*node.lhs) < Evaluate(*node.rhs));
+        } else if (node.operation == "<=") {
+            return Value(Evaluate(*node.lhs) <= Evaluate(*node.rhs));
+        } else if (node.operation == ">") {
+            return Value(Evaluate(*node.lhs) > Evaluate(*node.rhs));
+        } else if (node.operation == ">=") {
+            return Value(Evaluate(*node.lhs) >= Evaluate(*node.rhs));
+        } else if (node.operation == "+") {
+            return Evaluate(*node.lhs) + Evaluate(*node.rhs);
+        }
+        // } else if (node.operation == "-") {
+        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
+        // } else if (node.operation == "*") {
+        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
+        // } else if (node.operation == "/") {
+        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
+        // } else if (node.operation == "&&") {
+        //     return Evaluate(node.lhs) && Evaluate(node.rhs);
+        // } else if (node.operation == "||") {
+        //     return Evaluate(node.lhs) || Evaluate(node.rhs);
+        // }
+
+        throw std::runtime_error("Operation " + node.operation + " not implemented.");
     }
 };
 

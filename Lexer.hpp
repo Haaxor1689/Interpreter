@@ -58,6 +58,9 @@ public:
         if (IsIdentifierStart(current))
             return Identifier();
 
+        if (IsMinus(current))
+            return Minus();
+
         if (IsNumberStart(current))
             return Number();
 
@@ -104,6 +107,17 @@ private:
             return PopToken(it->second);
 
         return PopToken(Token::Type::Identifier);
+    }
+
+    Token Minus() {
+        buffer += '-';
+        current = source.get();
+        if (IsNumber(current)) {
+            return Number();
+        } else if (IsOperator(current)) {
+            return Operator();
+        }
+        return PopToken(Token::Type::BinaryOperator);
     }
 
     Token Number() {
@@ -163,6 +177,9 @@ private:
     }
     bool IsIdentifier(char c) {
         return std::isalpha(c) || std::isdigit(c) || c == '_';
+    }
+    bool IsMinus(char c) {
+        return c == '-';
     }
     bool IsNumberStart(char c) {
         return std::isdigit(c);

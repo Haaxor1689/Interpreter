@@ -179,4 +179,15 @@ TEST_CASE("Lexer") {
         CHECK(tokens[33] == Token("[", Token::Type::SquareOpen, 8));
         CHECK(tokens[38] == Token(".", Token::Type::BinaryOperator, 8));
     }
+
+    SECTION("Negative numbers") {
+        Lexer lexer("examples/lexer/LexerNegativeNumbers.ct");
+        auto tokens = GetTokens(lexer);
+        INFO(PrintTokens(tokens));
+        REQUIRE(tokens.size() == 5);
+        CHECK(tokens[0] == Token("-1", Token::Type::Number, 2));
+        CHECK(tokens[1] == Token("-.2", Token::Type::Number, 2));
+        CHECK(tokens[2] == Token("-", Token::Type::BinaryOperator, 2));
+        CHECK(tokens[3] == Token("2", Token::Type::Number, 2));
+    }
 }
