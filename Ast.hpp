@@ -120,8 +120,8 @@ struct TypeName : public Node, public Rule<lColon, lIdentifier> {
 
 struct VariableDef : public Node, public Rule<lVar, lIdentifier, TypeName> {
     VarID name;
-    std::unique_ptr<Expression> value;
     std::unique_ptr<TypeName> type;
+    std::unique_ptr<Expression> value;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -234,6 +234,8 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
 
     Block(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
+
+    bool HasReturnStatement() const;
 };
 
 struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {

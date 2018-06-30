@@ -71,4 +71,16 @@ private:
     std::string message;
 };
 
+struct TypeMismatchException : public std::exception {
+    TypeMismatchException(const std::string& expected, const std::string& actual)
+        : message("Type mismatch error. Expected \"" + expected + "\" got \"" + actual + "\".") {}
+
+    char const* what() const noexcept override {
+        return message.c_str();
+    }
+
+private:
+    std::string message;
+};
+
 } // namespace Interpreter

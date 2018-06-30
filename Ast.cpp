@@ -222,7 +222,8 @@ void Expression::Print(std::ostream& os, size_t depth) const {
             [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
         },
-        expression);
+        expression
+    );
 }
 
 WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -405,7 +406,8 @@ void Statement::Print(std::ostream& os, size_t depth) const {
             [&, depth](const WhileExpr& arg) { arg.Print(os, depth); },
             [&, depth](const Expression& arg) { arg.Print(os, depth); },
         },
-        expression);
+        expression
+    );
 }
 
 Block::Block(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -429,6 +431,38 @@ void Block::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
+bool Block::HasReturnStatement() const {
+    bool hasReturn = false;
+    for (const auto& statement : statements) {
+        std::visit(
+            Visitor{
+                [&](const auto&) { },
+                [&](const Return& arg) { hasReturn = true; },
+                [&](const ForExpr& arg) { hasReturn = arg.block->HasReturnStatement(); },
+                [&](const IfExpr& arg) {
+                    hasReturn = arg.ifStatement->block->HasReturnStatement();
+                    if (hasReturn) return;
+
+                    for (const auto& elseif : arg.elseifStatements) {
+                        hasReturn = elseif.block->HasReturnStatement();
+                        if (hasReturn) return;
+                    }
+
+                    if (arg.elseStatement) {
+                        hasReturn = arg.elseStatement->block->HasReturnStatement();
+                    }
+                },
+                [&](const WhileExpr& arg) { hasReturn = arg.block->HasReturnStatement(); },
+            },
+            statement.expression
+        );
+        if (hasReturn) {
+            return true;
+        }
+    }
+    return false;
+}
+
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent), symbols(&parent->Symbols()) {
     lFunc::RequireToken(token);
@@ -440,6 +474,11 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
 
     arguments = std::make_unique<Arguments>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
+
+    auto voidId = Symbols().GetSymbol("void");
+    if (arguments->returnType && arguments->returnType->typeName != voidId && !block->HasReturnStatement()) {
+        throw TypeMismatchException(Symbols().GetName(arguments->returnType->typeName), "void");
+    }
 }
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
