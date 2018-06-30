@@ -143,7 +143,7 @@ private:
             eval.localValues.emplace(argIt->name, Evaluate(*inIt));
         }
 
-        return eval.Evaluate(*func.block.get());
+        return eval.Evaluate(*func.block);
     }
 
     Value Evaluate(const VariableDef& node) {

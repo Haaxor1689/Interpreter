@@ -7,25 +7,33 @@
 #include "Exceptions.hpp"
 
 namespace Interpreter {
+    using VarID = unsigned;
+
+struct Symbol {
+    VarID id;
+    VarID type;
+};
 
 class SymbolTable {
-    using VarID = unsigned;
     VarID nextID = 0;
 
-    std::map<std::string, VarID> local;
+    std::map<std::string, Symbol> local;
     SymbolTable* parent;
 
 public:
     SymbolTable(SymbolTable* parent)
         : parent(parent) {}
 
-    VarID AddSymbol(const std::string& key) {
+    VarID AddSymbol(const std::string& key, VarID type = 0) {
         if (ContainsSymbol(key))
             throw IdentifierRedefinitionException(key);
-        return local[key] = NextID();
+
+        local[key].type = type;
+        local[key].id = NextID();
+        return local[key].id;
     }
 
-    VarID GetSymbol(const std::string& key) const {
+    Symbol GetSymbol(const std::string& key) const {
         auto it = local.find(key);
         if (it != local.end())
             return it->second;
@@ -39,11 +47,33 @@ public:
     }
 
     std::string GetName(VarID id) const {
-        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second == id; });
+        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
         if (it != local.end())
             return it->first;
         if (parent != nullptr)
             return parent->GetName(id);
+        throw UndefinedIdentifierNameException(id);
+    }
+
+    VarID GetType(VarID id) const {
+        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
+        if (it != local.end())
+            return it->second.type;
+        if (parent != nullptr)
+            return parent->GetType(id);
+        throw UndefinedIdentifierNameException(id);
+    }
+
+    void SetType(VarID id, VarID type) {
+        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
+        if (it != local.end()) {
+            it->second.type = type;
+            return;
+        }
+        if (parent != nullptr) {
+            parent->SetType(id, type);
+            return;
+        }
         throw UndefinedIdentifierNameException(id);
     }
 
@@ -56,7 +86,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SymbolTable& symbols) {
         os << "{ ";
         for (const auto& pair : symbols.local)
-            os << pair.second << ":" << pair.first << ", ";
+            os << pair.second.id << ":" << pair.first << ", ";
         return os << "}";
     }
 };

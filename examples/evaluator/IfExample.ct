@@ -4,4 +4,5 @@ func foo(var arg) {
     } else {
         return 0;
     }
+	 return -1;
 }

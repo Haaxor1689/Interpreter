@@ -1,0 +1,8 @@
+func foo() {
+	if true {
+	    return 12;
+	}
+	while true {
+		return "goo";
+	}
+}

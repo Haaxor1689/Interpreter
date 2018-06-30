@@ -9,4 +9,5 @@ func foo(var a, var b) {
 		  # Should never happen
         return -2;
     }
+	 return -3;
 }

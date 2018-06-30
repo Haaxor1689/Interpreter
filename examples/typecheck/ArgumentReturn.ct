@@ -1,0 +1,8 @@
+func goo(var a: bool) {
+    return a;
+}
+
+func foo(): void {
+    var a = 1;
+    a = goo(true);
+}
