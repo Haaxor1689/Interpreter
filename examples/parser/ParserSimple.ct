@@ -1,7 +1,7 @@
 # Simple example
 
 # Comment
-func goo(var foo, var boo) {
+func foo(var a) {
     "a";
     1;
 } # Another comment

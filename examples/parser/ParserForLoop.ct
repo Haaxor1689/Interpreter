@@ -1,7 +1,10 @@
 # For loop example
 
 # Comment
-func goo(var bbb, var yyy, var ccc) {
+func foo(var a) {
+    var bbb;
+	 var yyy;
+	 var ccc;
     for var aaa in bbb {
         for var xxx in yyy {
             ccc;

@@ -1,5 +1,5 @@
 # Function call example
 
-func goo(var a) {
-    goo(a);
+func foo(var a) {
+    foo(a);
 }

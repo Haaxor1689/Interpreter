@@ -127,7 +127,8 @@ private:
                 [&](const std::string& arg) { return Value(arg); },
                 [&](const VariableDef& arg) { return Evaluate(arg); },
             },
-            node.expression);
+            node.expression
+        );
     }
 
     Value Evaluate(const FunctionCall& node) {
@@ -141,6 +142,10 @@ private:
         auto argIt = func.arguments->arguments.begin();
         for (; inIt != node.arguments.end(); ++inIt, ++argIt) {
             eval.localValues.emplace(argIt->name, Evaluate(*inIt));
+        }
+
+        if (!std::holds_alternative<std::monostate>(func.externalFunction)) {
+            return eval.Evaluate(func.externalFunction);
         }
 
         return eval.Evaluate(*func.block);
@@ -185,6 +190,22 @@ private:
         }
 
         throw std::runtime_error("Operation " + node.operation + " not implemented.");
+    }
+
+    Value Evaluate(const ExtFunctionType& func) {
+        auto inIt = localValues.begin();
+        return std::visit(
+            Visitor{
+                [&](const auto&) { return Value(); },
+                [&](fVoidStringPtr arg) {
+                    arg(std::get<std::string>(inIt++->second));
+                    return Value();
+                },
+                [&](fStringPtr arg) { return Value(arg()); },
+                [&](fDoublePtr arg) { return Value(arg()); },
+            },
+            func
+        );
     }
 };
 

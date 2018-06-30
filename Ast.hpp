@@ -19,6 +19,11 @@ Visitor(Ts...)->Visitor<Ts...>;
 using VarID = unsigned;
 using Value = std::variant<std::monostate, bool, double, std::string>;
 
+using fVoidStringPtr = void(*)(const std::string&);
+using fStringPtr = std::string(*)();
+using fDoublePtr = double(*)();
+using ExtFunctionType = std::variant<std::monostate, fVoidStringPtr, fStringPtr, fDoublePtr>;
+
 // Output operator for Value type
 inline std::ostream& operator<<(std::ostream& os, const Value& val) {
     std::visit(
@@ -257,15 +262,22 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
     bool HasReturn() const;
 };
 
+struct ExternalFunction {
+    using FunctionType = std::variant<std::monostate, void(*)(std::string), std::string(*)(), double(*)()>;
+    FunctionType function;
+
+    ExternalFunction(const FunctionType& function) : function(function) {};
+};
+
 struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {
     VarID name;
     std::unique_ptr<Arguments> arguments;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
+    
+    ExtFunctionType externalFunction;
 
-    void* externalFunction;
-
-    FunctionDef(Node* parent, const std::string& signature, void* function);
+    FunctionDef(Node* parent, const std::string& signature, ExtFunctionType&& function);
     FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }

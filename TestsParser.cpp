@@ -13,6 +13,29 @@ void TryCreateParser(const std::string& name) {
     Parser p("examples/" + name);
 }
 
+std::string prefix(const std::string& additionalSymbols = "") { return
+              "Global: {\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 13:a," + additionalSymbols + " }\n"
+              "        Arguments: {\n"
+              "            Definition: {\n"
+              "                Variable: a\n"
+              "                Type: any\n"
+              "            }\n"
+              "        }\n"
+              "        Returns: {\n"
+              "            Type: void\n"
+              "        }\n"
+              "        Block: {\n";
+}
+std::string postfix = 
+              "        }\n"
+              "    }\n"
+              "}\n";
+
+
 } // namespace
 
 TEST_CASE("Parser") {
@@ -20,44 +43,17 @@ TEST_CASE("Parser") {
         Parser p("examples/parser/ParserSimple.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:goo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: goo\n"
-              "        Symbols: { 8:boo, 7:foo, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: foo\n"
-              "                Type: any\n"
-              "            }\n"
-              "            Definition: {\n"
-              "                Variable: boo\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            String: \"a\"\n"
               "            Double: 1\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("For loop parsing") {
         Parser p("examples/parser/ParserForLoop.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:goo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: goo\n"
-              "        Symbols: { 7:bbb, 9:ccc, 8:yyy, }\n"
-              "        Arguments: {\n"
+        CHECK(oss.str() == prefix(" 14:bbb, 16:ccc, 15:yyy,") +
               "            Definition: {\n"
               "                Variable: bbb\n"
               "                Type: any\n"
@@ -70,13 +66,8 @@ TEST_CASE("Parser") {
               "                Variable: ccc\n"
               "                Type: any\n"
               "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
               "            For: {\n"
-              "                Symbols: { 10:aaa, }\n"
+              "                Symbols: { 17:aaa, }\n"
               "                Definition: {\n"
               "                    Variable: aaa\n"
               "                    Type: any\n"
@@ -86,7 +77,7 @@ TEST_CASE("Parser") {
               "                }\n"
               "                Block: {\n"
               "                    For: {\n"
-              "                        Symbols: { 11:xxx, }\n"
+              "                        Symbols: { 18:xxx, }\n"
               "                        Definition: {\n"
               "                            Variable: xxx\n"
               "                            Type: any\n"
@@ -100,62 +91,28 @@ TEST_CASE("Parser") {
               "                    }\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("Function call parsing") {
         Parser p("examples/parser/ParserFunctionCall.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:goo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: goo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: a\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            FunctionCall: {\n"
-              "                Name: goo\n"
+              "                Name: foo\n"
               "                Arguments: {\n"
               "                    Variable: a\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("If/Else parsing") {
         Parser p("examples/parser/ParserIfElse.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: foo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: a\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            If: {\n"
               "                Symbols: { }\n"
               "                Condition: {\n"
@@ -166,7 +123,7 @@ TEST_CASE("Parser") {
               "                }\n"
               "            }\n"
               "            Elseif: {\n"
-              "                Symbols: { 8:b, }\n"
+              "                Symbols: { 14:b, }\n"
               "                Condition: {\n"
               "                    Definition: {\n"
               "                        Variable: b\n"
@@ -184,31 +141,14 @@ TEST_CASE("Parser") {
               "                }\n"
               "            }\n"
               "            Variable: a\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("If without else") {
         Parser p("examples/parser/ParserIf.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: foo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: a\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            If: {\n"
               "                Symbols: { }\n"
               "                Condition: {\n"
@@ -217,31 +157,14 @@ TEST_CASE("Parser") {
               "                Block: {\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("While parsing") {
         Parser p("examples/parser/ParserWhile.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: foo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: a\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            While: {\n"
               "                Symbols: { }\n"
               "                Condition: {\n"
@@ -250,31 +173,14 @@ TEST_CASE("Parser") {
               "                Block: {\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("DoWhile parsing") {
         Parser p("examples/parser/ParserDoWhile.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: foo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "            Definition: {\n"
-              "                Variable: a\n"
-              "                Type: any\n"
-              "            }\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix() +
               "            DoWhile: {\n"
               "                Symbols: { }\n"
               "                Condition: {\n"
@@ -283,9 +189,7 @@ TEST_CASE("Parser") {
               "                Block: {\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+        + postfix);
     }
 
     SECTION("Assignment parsing") {
@@ -294,7 +198,7 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 7:foo, 6:goo, 5:number, 4:string, 2:void, }\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 13:foo, 12:goo, 5:number, 4:string, 2:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
               "        Symbols: { }\n"
@@ -308,7 +212,7 @@ TEST_CASE("Parser") {
               "    }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 8:a, 9:b, 10:c, }\n"
+              "        Symbols: { 14:a, 15:b, 16:c, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -349,20 +253,9 @@ TEST_CASE("Parser") {
         Parser p("examples/parser/ParserOperators.ct");
         ostringstream oss;
         oss << p.Tree();
-        CHECK(oss.str() ==
-              "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
-              "    FunctionDef: {\n"
-              "        Name: foo\n"
-              "        Symbols: { 7:a, }\n"
-              "        Arguments: {\n"
-              "        }\n"
-              "        Returns: {\n"
-              "            Type: void\n"
-              "        }\n"
-              "        Block: {\n"
+        CHECK(oss.str() == prefix(" 14:b,") +
               "            Definition: {\n"
-              "                Variable: a\n"
+              "                Variable: b\n"
               "                Type: number\n"
               "                Value: {\n"
               "                    BinaryOperation: {\n"
@@ -379,15 +272,13 @@ TEST_CASE("Parser") {
               "            BinaryOperation: {\n"
               "                Operator: -=\n"
               "                Lhs: {\n"
-              "                    Variable: a\n"
+              "                    Variable: b\n"
               "                }\n"
               "                Rhs: {\n"
               "                    Double: 2\n"
               "                }\n"
               "            }\n"
-              "        }\n"
-              "    }\n"
-              "}\n");
+           + postfix);
     }
 
     SECTION("Wrong parser files") {
@@ -408,10 +299,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:any, 3:bool, 6:foo, 5:number, 4:string, 2:void, }\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 7:a, 8:b, 9:v, }\n"
+              "        Symbols: { 13:a, 14:b, 15:v, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"

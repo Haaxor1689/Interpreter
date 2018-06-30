@@ -654,8 +654,8 @@ bool Block::HasReturn() const {
     return false;
 }
 
-FunctionDef::FunctionDef(Node* parent, const std::string& signature, void* function)
-    : Node(parent), symbols(&parent->Symbols()) {
+FunctionDef::FunctionDef(Node* parent, const std::string& signature, ExtFunctionType&& function)
+    : Node(parent), symbols(&parent->Symbols()), externalFunction(std::move(function)) {
     
     std::istringstream source(signature.c_str());
     Lexer lexer(source);
@@ -670,7 +670,6 @@ FunctionDef::FunctionDef(Node* parent, const std::string& signature, void* funct
     shift();
 
     arguments = std::make_unique<Arguments>(this, token, shift);
-    
 }
 
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -700,11 +699,14 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
 }
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
+    if (!std::holds_alternative<std::monostate>(externalFunction)) {
+        return;
+    }
     os << Indent(depth) << "FunctionDef: {\n";
     os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     arguments ? arguments->Print(os, depth + 1) : void();
-    arguments ? block->Print(os, depth + 1) : void();
+    block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
@@ -720,6 +722,11 @@ Global::Global(const Token& token, const std::function<void()>& shift)
     symbols.AddSymbol("bool");
     symbols.AddSymbol("string");
     symbols.AddSymbol("number");
+    
+    functions.emplace_back(this, "func Write(var message: string): void", &Write);
+    functions.emplace_back(this, "func WriteLine(var message: string): void", &WriteLine);
+    functions.emplace_back(this, "func ReadNumber(): number", &ReadNumber);
+    functions.emplace_back(this, "func ReadString(): string", &ReadText);
 
     while (!lEoF::MatchToken(token)) {
         functions.emplace_back(this, token, shift);

@@ -17,8 +17,8 @@ TEST_CASE("Symbol Table") {
     SECTION("Function names") {
         Parser p("examples/symbols/FunctionDef.ct");
         INFO(p.Tree());
-        CHECK(p.Tree().Root().Symbols().GetSymbol("foo").id == 6);
-        CHECK(p.Tree().Root().Symbols().GetSymbol("goo").id == 7);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("foo").id == 12);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("goo").id == 13);
     }
 
     SECTION("Undefined symbol exception") {
