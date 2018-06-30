@@ -10,7 +10,7 @@
 namespace Interpreter {
 
 class Lexer {
-    std::ifstream source;
+    std::istream& source;
     std::string buffer;
     char current;
     unsigned line = 1;
@@ -48,8 +48,8 @@ class Lexer {
     };
 
 public:
-    Lexer(const std::string& path)
-        : source(path), current(source.get()) {}
+    Lexer(std::istream& stream)
+        : source(stream), current(source.get()) {}
 
     Token Next() {
         RemoveWhitespace();

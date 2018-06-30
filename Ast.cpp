@@ -654,6 +654,25 @@ bool Block::HasReturn() const {
     return false;
 }
 
+FunctionDef::FunctionDef(Node* parent, const std::string& signature, void* function)
+    : Node(parent), symbols(&parent->Symbols()) {
+    
+    std::istringstream source(signature.c_str());
+    Lexer lexer(source);
+    auto token = lexer.Next();
+    auto shift = [&]() { token = lexer.Next(); };
+
+    lFunc::RequireToken(token);
+    shift();
+
+    lIdentifier::RequireToken(token);
+    name = parent->Symbols().AddSymbol(token.text);
+    shift();
+
+    arguments = std::make_unique<Arguments>(this, token, shift);
+    
+}
+
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent), symbols(&parent->Symbols()) {
     lFunc::RequireToken(token);

@@ -29,7 +29,8 @@ std::string PrintTokens(const vector<Token>& tokens) {
 
 TEST_CASE("Lexer") {
     SECTION("Empty file gives EoF token") {
-        Lexer lexer("examples/lexer/LexerEmpty.ct");
+        std::ifstream file("examples/lexer/LexerEmpty.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 1);
@@ -37,7 +38,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("File with only a comment") {
-        Lexer lexer("examples/lexer/LexerComment.ct");
+        std::ifstream file("examples/lexer/LexerComment.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 1);
@@ -45,7 +47,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Two identifiers split by space") {
-        Lexer lexer("examples/lexer/LexerTwoIdentifiers.ct");
+        std::ifstream file("examples/lexer/LexerTwoIdentifiers.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 3);
@@ -55,7 +58,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Number tokens") {
-        Lexer lexer("examples/lexer/LexerNumbers.ct");
+        std::ifstream file("examples/lexer/LexerNumbers.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 4);
@@ -65,7 +69,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("String tokens") {
-        Lexer lexer("examples/lexer/LexerStrings.ct");
+        std::ifstream file("examples/lexer/LexerStrings.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 6);
@@ -77,7 +82,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Invalid string tokens") {
-        Lexer lexer("examples/lexer/LexerInvalidString.ct");
+        std::ifstream file("examples/lexer/LexerInvalidString.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 5);
@@ -89,7 +95,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Operators") {
-        Lexer lexer("examples/lexer/LexerOperators.ct");
+        std::ifstream file("examples/lexer/LexerOperators.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 19);
@@ -103,7 +110,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Invalid number tokens") {
-        Lexer lexer("examples/lexer/LexerInvalidNumber.ct");
+        std::ifstream file("examples/lexer/LexerInvalidNumber.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 6);
@@ -115,7 +123,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Parentheses") {
-        Lexer lexer("examples/lexer/LexerParentheses.ct");
+        std::ifstream file("examples/lexer/LexerParentheses.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 12);
@@ -127,7 +136,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Keywords") {
-        Lexer lexer("examples/lexer/LexerKeywords.ct");
+        std::ifstream file("examples/lexer/LexerKeywords.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 13);
@@ -146,7 +156,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("More keywords on complex example") {
-        Lexer lexer("examples/lexer/LexerComplex.ct");
+        std::ifstream file("examples/lexer/LexerComplex.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 41);
@@ -180,7 +191,8 @@ TEST_CASE("Lexer") {
     }
 
     SECTION("Negative numbers") {
-        Lexer lexer("examples/lexer/LexerNegativeNumbers.ct");
+        std::ifstream file("examples/lexer/LexerNegativeNumbers.ct");
+        Lexer lexer(file);
         auto tokens = GetTokens(lexer);
         INFO(PrintTokens(tokens));
         REQUIRE(tokens.size() == 5);
@@ -188,5 +200,20 @@ TEST_CASE("Lexer") {
         CHECK(tokens[1] == Token("-.2", Token::Type::Number, 2));
         CHECK(tokens[2] == Token("-", Token::Type::BinaryOperator, 2));
         CHECK(tokens[3] == Token("2", Token::Type::Number, 2));
+    }
+
+    SECTION("From string") {
+        std::istringstream source("func foo() { 1 }");
+        Lexer lexer(source);
+        auto tokens = GetTokens(lexer);
+        INFO(PrintTokens(tokens));
+        REQUIRE(tokens.size() == 8);
+        CHECK(tokens[0] == Token("func", Token::Type::Func, 1));
+        CHECK(tokens[1] == Token("foo", Token::Type::Identifier, 1));
+        CHECK(tokens[2] == Token("(", Token::Type::ParenOpen, 1));
+        CHECK(tokens[3] == Token(")", Token::Type::ParenClose, 1));
+        CHECK(tokens[4] == Token("{", Token::Type::CurlyOpen, 1));
+        CHECK(tokens[5] == Token("1", Token::Type::Number, 1));
+        CHECK(tokens[6] == Token("}", Token::Type::CurlyClose, 1));
     }
 }

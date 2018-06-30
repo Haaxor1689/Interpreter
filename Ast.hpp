@@ -257,16 +257,15 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
     bool HasReturn() const;
 };
 
-struct ExternalFunction : public Node {
-    
-};
-
 struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {
     VarID name;
     std::unique_ptr<Arguments> arguments;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 
+    void* externalFunction;
+
+    FunctionDef(Node* parent, const std::string& signature, void* function);
     FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
