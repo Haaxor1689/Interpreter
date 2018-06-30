@@ -94,10 +94,18 @@ TEST_CASE("Evaluator") {
         CHECK(to_string(p.Evaluate("foo", { false, false })) == "False");
     }
 
-    SECTION("Logical Or Operator") {
+    SECTION("Function call") {
         Parser p("examples/evaluator/FunctionCall.ct");
         INFO(p.Tree());
         CHECK(to_string(p.Evaluate("foo", { 1.0 })) == "2");
         CHECK_THROWS_WITH(p.Evaluate("foo", { "a" }), "No operator for this type.");
+    }
+
+    SECTION("") {
+        Parser p("examples/evaluator/FunctionRecursiveCall.ct");
+        INFO(p.Tree());
+        CHECK(to_string(p.Evaluate("Factorial", { 1.0 })) == "1");
+        CHECK(to_string(p.Evaluate("Factorial", { 2.0 })) == "2");
+        CHECK(to_string(p.Evaluate("Factorial", { 4.0 })) == "24");
     }
 }
