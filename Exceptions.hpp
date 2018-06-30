@@ -10,27 +10,29 @@ namespace Interpreter {
 
 struct ParseException : public std::exception {
     ParseException(Token received, const std::vector<Token::Type>& expected) {
-        ret << "Failed to parse " << received << ". Expected ";
+        std::stringstream sstream;
+        sstream << "Failed to parse " << received << ". Expected ";
         if (expected.size() == 0) {
-            ret << Token::TypeString(Token::Type::Invalid);
+            sstream << Token::TypeString(Token::Type::Invalid);
         } else if (expected.size() == 1) {
-            ret << Token::TypeString(expected[0]);
+            sstream << Token::TypeString(expected[0]);
         } else {
-            ret << "one of following { ";
+            sstream << "one of following { ";
             for (auto tokenType : expected) {
-                ret << Token::TypeString(tokenType) + ", ";
+                sstream << Token::TypeString(tokenType) + ", ";
             }
-            ret << "}";
+            sstream << "}";
         }
-        ret << ".";
+        sstream << ".";
+        message = sstream.str();
     }
 
     char const* what() const noexcept override {
-        return ret.str().c_str();
+        return message.c_str();
     }
 
 private:
-    std::stringstream ret;
+    std::string message;
 };
 
 struct UndefinedIdentifierException : public std::exception {

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <map>
 #include <regex>
+#include <cctype>
 
 #include "Token.hpp"
 
