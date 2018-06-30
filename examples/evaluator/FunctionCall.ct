@@ -1,0 +1,7 @@
+func goo(var a) {
+    return + a 1;
+}
+
+func foo(var a) {
+    return goo(a);
+}

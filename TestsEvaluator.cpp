@@ -59,18 +59,45 @@ TEST_CASE("Evaluator") {
         CHECK(to_string(q.Evaluate("foo", { false })) == "Void");
     }
 
+    SECTION("Equality Operator") {
+        Parser p("examples/evaluator/EqualityOperator.ct");
+        INFO(p.Tree());
+        CHECK(to_string(p.Evaluate("foo", { 2.0, 2.0 })) == "0");
+        CHECK(to_string(p.Evaluate("foo", { 3.0, 2.0 })) == "1");
+        CHECK(to_string(p.Evaluate("foo", { 1.0, 2.0 })) == "-1");
+    }
+
     SECTION("Plus Operator") {
         Parser p("examples/evaluator/PlusOperator.ct");
         INFO(p.Tree());
         CHECK(to_string(p.Evaluate("foo", { 1.0, 1.0 })) == "2");
         CHECK(to_string(p.Evaluate("foo", { 2.5, -1.0 })) == "1.5");
+        CHECK(to_string(p.Evaluate("foo", { "Hello"s, "World"s })) == "HelloWorld");
+        CHECK_THROWS_WITH(to_string(p.Evaluate("foo", { "Hello"s, 1.0 })), "No operator for this type.");
     }
 
-    SECTION("Equality Operator") {
-        Parser p("examples/evaluator/EqualityOperator.ct");
+    SECTION("Logical And Operator") {
+        Parser p("examples/evaluator/LogicalAnd.ct");
         INFO(p.Tree());
-        CHECK(to_string(p.Evaluate("foo", { 1.0, 2.0 })) == "1");
-        CHECK(to_string(p.Evaluate("foo", { 3.0, 2.0 })) == "-1");
-        CHECK(to_string(p.Evaluate("foo", { 2.0, 2.0 })) == "0");
+        CHECK(to_string(p.Evaluate("foo", { true, true })) == "True");
+        CHECK(to_string(p.Evaluate("foo", { true, false })) == "False");
+        CHECK(to_string(p.Evaluate("foo", { false, true })) == "False");
+        CHECK(to_string(p.Evaluate("foo", { false, false })) == "False");
+    }
+
+    SECTION("Logical Or Operator") {
+        Parser p("examples/evaluator/LogicalOr.ct");
+        INFO(p.Tree());
+        CHECK(to_string(p.Evaluate("foo", { true, true })) == "True");
+        CHECK(to_string(p.Evaluate("foo", { true, false })) == "True");
+        CHECK(to_string(p.Evaluate("foo", { false, true })) == "True");
+        CHECK(to_string(p.Evaluate("foo", { false, false })) == "False");
+    }
+
+    SECTION("Logical Or Operator") {
+        Parser p("examples/evaluator/FunctionCall.ct");
+        INFO(p.Tree());
+        CHECK(to_string(p.Evaluate("foo", { 1.0 })) == "2");
+        CHECK_THROWS_WITH(p.Evaluate("foo", { "a" }), "No operator for this type.");
     }
 }

@@ -6,6 +6,7 @@ func foo(var a, var b) {
     } elseif < a b {
         return -1;
     } else {
+		  # Should never happen
         return -2;
     }
 }

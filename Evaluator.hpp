@@ -53,7 +53,10 @@ private:
             Value value = std::visit(
                 Visitor{
                     [&](const auto&) { return Value(); },
-                    [&](const Return& arg) { didHitReturn = true; return Evaluate(*arg.value); },
+                    [&](const Return& arg) { 
+                        didHitReturn = true; 
+                        return Evaluate(*arg.value);
+                    },
                     [&](const ForExpr& arg) {
                         auto eval = Evaluator(this, root);
                         auto value = eval.Evaluate(arg);
@@ -91,7 +94,7 @@ private:
         for (const auto& elsif : node.elseifStatements) {
             auto elseifEval = Evaluator(this, root);
             if (std::get<bool>(elseifEval.Evaluate(*elsif.condition))) {
-                auto value = elseifEval.Evaluate(*node.ifStatement->block);
+                auto value = elseifEval.Evaluate(*elsif.block);
                 didHitReturn = elseifEval.didHitReturn;
                 return value;
             }
@@ -169,18 +172,17 @@ private:
             return Value(Evaluate(*node.lhs) >= Evaluate(*node.rhs));
         } else if (node.operation == "+") {
             return Evaluate(*node.lhs) + Evaluate(*node.rhs);
+        } else if (node.operation == "-") {
+            return Value(Evaluate(*node.lhs) - Evaluate(*node.rhs));
+        } else if (node.operation == "*") {
+            return Value(Evaluate(*node.lhs) * Evaluate(*node.rhs));
+        } else if (node.operation == "/") {
+            return Value(Evaluate(*node.lhs) / Evaluate(*node.rhs));
+        } else if (node.operation == "&&") {
+            return Value(Evaluate(*node.lhs) && Evaluate(*node.rhs));
+        } else if (node.operation == "||") {
+            return Value(Evaluate(*node.lhs) || Evaluate(*node.rhs));
         }
-        // } else if (node.operation == "-") {
-        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
-        // } else if (node.operation == "*") {
-        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
-        // } else if (node.operation == "/") {
-        //     return Evaluate(node.lhs) - Evaluate(node.rhs);
-        // } else if (node.operation == "&&") {
-        //     return Evaluate(node.lhs) && Evaluate(node.rhs);
-        // } else if (node.operation == "||") {
-        //     return Evaluate(node.lhs) || Evaluate(node.rhs);
-        // }
 
         throw std::runtime_error("Operation " + node.operation + " not implemented.");
     }
