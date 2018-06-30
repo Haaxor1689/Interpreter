@@ -1,5 +1,8 @@
 #include "Ast.hpp"
 
+#include "Lexer.hpp"
+#include "WrapperFunctions.hpp"
+
 namespace Interpreter {
 
 BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -194,6 +197,33 @@ FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function
 
     lParenClose::RequireToken(token);
     shift();
+
+    // Signature check
+    auto node = parent;
+    FunctionDef* func = nullptr;
+    while (node->parent != nullptr) {
+        func = dynamic_cast<FunctionDef*>(node);
+        if (func != nullptr && func->name == name) {
+            break;
+        }
+        func = nullptr;
+        node = node->parent;
+    }
+    const FunctionDef& functionDef = func == nullptr ? static_cast<Global*>(node)->GetFunction(name) : *func;
+    if (arguments.size() != functionDef.arguments->arguments.size()) {
+            throw TypeMismatchException(std::to_string(arguments.size()) + " arg(s)", std::to_string(functionDef.arguments->arguments.size()) + " arg(s)");
+    }
+
+    auto anyType = Symbols().GetSymbol("any").id;
+    auto inIt = arguments.begin();
+    auto argIt = functionDef.arguments->arguments.begin();
+    for (; inIt != arguments.end(); ++inIt, ++argIt) {
+        auto inType = inIt->ReturnType();
+        auto argType = argIt->ReturnType();
+        if (inType != anyType && argType != anyType && inType != argType) {
+            throw TypeMismatchException(functionDef.Symbols().GetName(argType), Symbols().GetName(inType));
+        }
+    }
 }
 
 void FunctionCall::Print(std::ostream& os, size_t depth) const {

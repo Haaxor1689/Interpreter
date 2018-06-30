@@ -101,7 +101,7 @@ TEST_CASE("Evaluator") {
         CHECK_THROWS_WITH(p.Evaluate("foo", { "a" }), "No operator for this type.");
     }
 
-    SECTION("") {
+    SECTION("Recursive call") {
         Parser p("examples/evaluator/FunctionRecursiveCall.ct");
         INFO(p.Tree());
         CHECK(to_string(p.Evaluate("Factorial", { 1.0 })) == "1");

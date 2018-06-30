@@ -133,7 +133,7 @@ private:
     Value Evaluate(const FunctionCall& node) {
         const FunctionDef& func = root.GetFunction(node.name);
         if (node.arguments.size() != func.arguments->arguments.size()) {
-            throw std::runtime_error("Wrong number of arguments.");
+            throw TypeMismatchException(std::to_string(node.arguments.size()) + "arg(s)", std::to_string(func.arguments->arguments.size()) + "arg(s)");
         }
 
         Evaluator eval(this, root);

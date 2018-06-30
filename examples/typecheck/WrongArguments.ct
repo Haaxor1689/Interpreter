@@ -1,0 +1,6 @@
+func goo(var b: string) {}
+
+func foo() {
+	var a = 2;
+	goo(2);
+}

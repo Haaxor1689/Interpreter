@@ -64,7 +64,6 @@ struct Expression;
 
 struct Node {
 protected:
-    Node* parent;
     Node(Node* parent)
         : parent(parent) {}
 
@@ -76,6 +75,7 @@ protected:
     virtual ~Node() {}
 
 public:
+    Node* parent;
     virtual void Print(std::ostream& os, size_t depth) const = 0;
     virtual VarID ReturnType() const = 0;
     virtual SymbolTable& Symbols() { return parent->Symbols(); }
@@ -255,6 +255,10 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
     bool HasReturn() const;
+};
+
+struct ExternalFunction : public Node {
+    
 };
 
 struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Block> {

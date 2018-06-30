@@ -13,7 +13,7 @@ void TryCreateParser(const std::string& name) {
 
 } // namespace
 
-TEST_CASE("Function call") {
+TEST_CASE("Typecheck") {
     SECTION("Function return") {
         CHECK_NOTHROW(TryCreateParser("typecheck/VoidReturn.ct"));
         CHECK_THROWS_WITH(TryCreateParser("typecheck/ArgumentReturn.ct"),
@@ -29,5 +29,10 @@ TEST_CASE("Function call") {
     SECTION("AnyType") {
         CHECK_THROWS_WITH(TryCreateParser("typecheck/ReassignAny.ct"),
                           "Type mismatch error. Expected \"number\" got \"string\".");
+    }
+
+    SECTION("Function arguments") {
+        CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongArguments.ct"),
+                          "Type mismatch error. Expected \"string\" got \"number\".");
     }
 }
