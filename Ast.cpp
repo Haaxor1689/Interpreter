@@ -41,6 +41,20 @@ void VariableAssign::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
+TypeName::TypeName(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent) {
+    lColon::RequireToken(token);
+    shift();
+        
+    lIdentifier::RequireToken(token);
+    typeName = Symbols().GetSymbol(token.text);
+    shift();
+}
+
+void TypeName::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Type: " << Symbols().GetName(typeName) << "\n";
+}
+
 VariableRef::VariableRef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent) {
     lIdentifier::RequireToken(token);
@@ -61,6 +75,10 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
     name = Symbols().AddSymbol(token.text);
     shift();
 
+    if (lColon::MatchToken(token)) {
+        type = std::make_unique<TypeName>(this, token, shift);
+    }
+
     if (lBinaryOperator::MatchToken(token) && token.text == "=") {
         shift();
 
@@ -71,6 +89,9 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
 void VariableDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Definition: {\n";
     os << Indent(depth + 1) << "Variable: " << Symbols().GetName(name) << "\n";
+    if (type) {
+        type->Print(os, depth + 1);
+    }
     if (value) {
         os << Indent(depth + 1) << "Value: {\n";
         value->Print(os, depth + 2);
@@ -98,6 +119,10 @@ Arguments::Arguments(Node* parent, const Token& token, const std::function<void(
 
     lParenClose::RequireToken(token);
     shift();
+    
+    if (lColon::MatchToken(token)) {
+        returnType = std::make_unique<TypeName>(this, token, shift);
+    }
 }
 
 void Arguments::Print(std::ostream& os, size_t depth) const {
@@ -105,6 +130,11 @@ void Arguments::Print(std::ostream& os, size_t depth) const {
     for (const auto& arg : arguments)
         arg.Print(os, depth + 1);
     os << Indent(depth) << "}\n";
+    if (returnType) {
+        os << Indent(depth) << "Returns: {\n";
+        returnType->Print(os, depth + 1);
+        os << Indent(depth) << "}\n";
+    }
 }
 
 FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -423,6 +453,12 @@ void FunctionDef::Print(std::ostream& os, size_t depth) const {
 
 Global::Global(const Token& token, const std::function<void()>& shift)
     : Node(nullptr), symbols(nullptr) {
+    // Add predefined symbols and functions
+    symbols.AddSymbol("void");
+    symbols.AddSymbol("bool");
+    symbols.AddSymbol("string");
+    symbols.AddSymbol("number");
+
     while (!lEoF::MatchToken(token)) {
         functions.emplace_back(this, token, shift);
     }

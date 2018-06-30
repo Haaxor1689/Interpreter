@@ -18,8 +18,8 @@ void TryCreateParser(const std::string& name) {
 TEST_CASE("Symbol Table") {
     SECTION("Function names") {
         Parser p("examples/symbols/FunctionDef.ct");
-        CHECK(p.Tree().Root().Symbols().GetSymbol("foo") == 1);
-        CHECK(p.Tree().Root().Symbols().GetSymbol("goo") == 2);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("foo") == 5);
+        CHECK(p.Tree().Root().Symbols().GetSymbol("goo") == 6);
     }
 
     SECTION("Undefined symbol exception") {

@@ -22,10 +22,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:goo, }\n"
+              "    Symbols: { 2:bool, 5:goo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
-              "        Symbols: { 3:boo, 2:foo, }\n"
+              "        Symbols: { 7:boo, 6:foo, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: foo\n"
@@ -48,10 +48,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:goo, }\n"
+              "    Symbols: { 2:bool, 5:goo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
-              "        Symbols: { 2:bbb, 4:ccc, 3:yyy, }\n"
+              "        Symbols: { 6:bbb, 8:ccc, 7:yyy, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: bbb\n"
@@ -65,7 +65,7 @@ TEST_CASE("Parser") {
               "        }\n"
               "        Block: {\n"
               "            For: {\n"
-              "                Symbols: { 5:aaa, }\n"
+              "                Symbols: { 9:aaa, }\n"
               "                Definition: {\n"
               "                    Variable: aaa\n"
               "                }\n"
@@ -74,7 +74,7 @@ TEST_CASE("Parser") {
               "                }\n"
               "                Block: {\n"
               "                    For: {\n"
-              "                        Symbols: { 6:xxx, }\n"
+              "                        Symbols: { 10:xxx, }\n"
               "                        Definition: {\n"
               "                            Variable: xxx\n"
               "                        }\n"
@@ -98,10 +98,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:goo, }\n"
+              "    Symbols: { 2:bool, 5:goo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -125,10 +125,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:foo, }\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -145,7 +145,7 @@ TEST_CASE("Parser") {
               "                }\n"
               "            }\n"
               "            Elseif: {\n"
-              "                Symbols: { 3:b, }\n"
+              "                Symbols: { 7:b, }\n"
               "                Condition: {\n"
               "                    Definition: {\n"
               "                        Variable: b\n"
@@ -173,10 +173,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:foo, }\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -202,10 +202,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:foo, }\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -231,10 +231,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:foo, }\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -260,7 +260,7 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 2:foo, 1:goo, }\n"
+              "    Symbols: { 2:bool, 6:foo, 5:goo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
               "        Symbols: { }\n"
@@ -271,7 +271,7 @@ TEST_CASE("Parser") {
               "    }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 3:a, 4:b, 5:c, }\n"
+              "        Symbols: { 7:a, 8:b, 9:c, }\n"
               "        Arguments: {\n"
               "            Definition: {\n"
               "                Variable: a\n"
@@ -308,10 +308,10 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 1:foo, }\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
-              "        Symbols: { 2:a, }\n"
+              "        Symbols: { 6:a, }\n"
               "        Arguments: {\n"
               "        }\n"
               "        Block: {\n"
@@ -353,5 +353,41 @@ TEST_CASE("Parser") {
         CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
                           "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, "
                           "Binary Operator, Identifier, True, False, Number, String, Var, }.");
+    }
+
+    SECTION("Function and variables types") {
+        Parser p("examples/parser/ParserWithTypes.ct");
+        ostringstream oss;
+        oss << p.Tree();
+        CHECK(oss.str() ==
+              "Global: {\n"
+              "    Symbols: { 2:bool, 5:foo, 4:number, 3:string, 1:void, }\n"
+              "    FunctionDef: {\n"
+              "        Name: foo\n"
+              "        Symbols: { 6:a, 7:b, 8:v, }\n"
+              "        Arguments: {\n"
+              "            Definition: {\n"
+              "                Variable: a\n"
+              "                Type: number\n"
+              "            }\n"
+              "        }\n"
+              "        Returns: {\n"
+              "            Type: void\n"
+              "        }\n"
+              "        Block: {\n"
+              "            Definition: {\n"
+              "                Variable: b\n"
+              "                Type: string\n"
+              "            }\n"
+              "            Definition: {\n"
+              "                Variable: v\n"
+              "                Type: bool\n"
+              "                Value: {\n"
+              "                    Bool: true\n"
+              "                }\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+              "}\n");
     }
 }

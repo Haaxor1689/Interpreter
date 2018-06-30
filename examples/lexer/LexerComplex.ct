@@ -1,7 +1,7 @@
 # Complex example
 
 # Comment
-func goo(_ bar: string, boo: int) -> bool {
+func goo(bar: string, boo: number): bool {
     var f = null; return true # for
 } # Another comment
 for i in 0 ..< string01.size {

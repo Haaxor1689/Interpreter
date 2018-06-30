@@ -40,6 +40,7 @@ using lParenOpen = TokenType<Token::Type::ParenOpen>;
 using lParenClose = TokenType<Token::Type::ParenClose>;
 using lCurlyOpen = TokenType<Token::Type::CurlyOpen>;
 using lCurlyClose = TokenType<Token::Type::CurlyClose>;
+using lColon = TokenType<Token::Type::Colon>;
 using lSemicolon = TokenType<Token::Type::Semicolon>;
 using lString = TokenType<Token::Type::String>;
 using lNumber = TokenType<Token::Type::Number>;
@@ -110,16 +111,25 @@ struct VariableRef : public Node, public Rule<lIdentifier> {
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
+struct TypeName : public Node, public Rule<lColon, lIdentifier> {
+    VarID typeName;
+
+    TypeName(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+};
+
+struct VariableDef : public Node, public Rule<lVar, lIdentifier, TypeName> {
     VarID name;
     std::unique_ptr<Expression> value;
+    std::unique_ptr<TypeName> type;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
 };
 
-struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
+struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose, TypeName> {
     std::list<VariableDef> arguments;
+    std::unique_ptr<TypeName> returnType;
 
     Arguments(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
