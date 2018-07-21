@@ -11,11 +11,12 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
   set(CMAKE_CXX_FLAGS "/std:c++17 /permissive- /W4 /EHsc")
 endif()
 
-# Copying of resources to outpud directories
+# Copying of resources to output directories
 file(GLOB RESOURCES ${CMAKE_SOURCE_DIR}/examples/*.ct)
 file(COPY ${RESOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/examples)
 
 # Add executable
+add_executable(InterpretCLI Cli.cpp Ast.cpp)
 add_executable(Test TestsMain.cpp TestsLexer.cpp TestsParser.cpp TestsSymbolTable.cpp TestsEvaluator.cpp TestsTypecheck.cpp TestsExternalFuntions.cpp Ast.cpp)
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/examples" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
