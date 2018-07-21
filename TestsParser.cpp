@@ -15,7 +15,7 @@ void TryCreateParser(const std::string& name) {
 
 std::string prefix(const std::string& additionalSymbols = "") { return
               "Global: {\n"
-              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
               "        Symbols: { 13:a," + additionalSymbols + " }\n"
@@ -198,7 +198,7 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 13:foo, 12:goo, 5:number, 4:string, 2:void, }\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 13:foo, 12:goo, 5:number, 4:string, 2:void, }\n"
               "    FunctionDef: {\n"
               "        Name: goo\n"
               "        Symbols: { }\n"
@@ -299,7 +299,7 @@ TEST_CASE("Parser") {
         oss << p.Tree();
         CHECK(oss.str() ==
               "Global: {\n"
-              "    Symbols: { 10:ReadNumber, 11:ReadString, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
+              "    Symbols: { 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 12:foo, 5:number, 4:string, 2:void, }\n"
               "    FunctionDef: {\n"
               "        Name: foo\n"
               "        Symbols: { 13:a, 14:b, 15:v, }\n"

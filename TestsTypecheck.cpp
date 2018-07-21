@@ -23,7 +23,7 @@ TEST_CASE("Typecheck") {
         CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongReturn.ct"),
                           "Type mismatch error on line 1 caused by wrong return type. Expected \"number\" got \"bool\".");
         CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongMultipleReturn.ct"),
-                          "Type mismatch error on line 2 caused wrong return type. Expected \"void\" got \"number\".");
+                          "Type mismatch error on line 2 caused by wrong return type. Expected \"void\" got \"number\".");
     }
 
     SECTION("AnyType") {

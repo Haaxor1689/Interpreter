@@ -670,6 +670,7 @@ FunctionDef::FunctionDef(Node* parent, const std::string& signature, ExtFunction
     shift();
 
     arguments = std::make_unique<Arguments>(this, token, shift);
+    parent->Symbols().SetType(name, arguments->returnType->typeName);
 }
 
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -726,7 +727,7 @@ Global::Global(const Token& token, const std::function<void()>& shift)
     functions.emplace_back(this, "func Write(var message: string): void", &Write);
     functions.emplace_back(this, "func WriteLine(var message: string): void", &WriteLine);
     functions.emplace_back(this, "func ReadNumber(): number", &ReadNumber);
-    functions.emplace_back(this, "func ReadString(): string", &ReadText);
+    functions.emplace_back(this, "func ReadText(): string", &ReadText);
 
     while (!lEoF::MatchToken(token)) {
         functions.emplace_back(this, token, shift);
