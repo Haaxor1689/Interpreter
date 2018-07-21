@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
         Interpreter::Parser parser(argv[1]);
         try {
             using Interpreter::operator<<;
-            std::cout << "Evaluation returned: " << parser.Evaluate(argv[2]) << "." << std::endl;
+            std::cout << "Evaluation returned: " << parser.Evaluate(argv[2], argc - 3, &argv[3]) << "." << std::endl;
         } catch(const std::exception& err) {
             std::cerr << "Failed to evaluate the provided function.\n" << err.what() << std::endl;
             return -1;
