@@ -1,6 +1,7 @@
 #include "catch.hpp"
 
 #include "Interpreter"
+#include <iostream>
 
 using namespace std;
 using namespace Interpreter;

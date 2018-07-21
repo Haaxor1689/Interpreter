@@ -1,0 +1,41 @@
+func IsValidColumn(var column: number): bool {
+	return || > column 2 < column 0;
+}
+
+func IsValidRow(var row: string): bool {
+	return || == row "A" || == row "B" == row "C";
+}
+
+func Play(): void {
+	var shouldEnd = false;
+
+	var _00 = "";
+	var _01 = "";
+	var _02 = "";
+	var _10 = "";
+	var _11 = "";
+	var _12 = "";
+	var _21 = "";
+	var _22 = "";
+	var _23 = "";
+
+	var currentPlayer = "X";
+
+	while (!shouldEnd) {
+		WriteLine(+ "Player " + currentPlayer "'s turn");
+
+		WriteLine("Write column number:");
+		var column = ReadNumber();
+		if (!IsValidColumn(column)) {
+			WriteLine(+ "Invalid column " column);
+		}
+
+		WriteLine("Write row number:");
+		var row = ReadText();
+		if (!IsValidRow(row)) {
+			WriteLine(+ "Invalid row " row);
+		}
+	}
+
+	return + "Player " + currentPlayer " won";
+}

@@ -624,7 +624,7 @@ Block::Block(Node* parent, const Token& token, const std::function<void()>& shif
         auto current = statement.ReturnType();
         if (current == 0 || !statement.HasReturn()) continue;
         if (returnType != anyType && current != anyType && current != returnType) {
-            throw TypeMismatchException(Symbols().GetName(returnType), Symbols().GetName(current), line);
+            throw TypeMismatchException(Symbols().GetName(returnType), Symbols().GetName(current), statement.line, "wrong return type");
         }
 
         if (returnType == anyType) {
@@ -692,7 +692,7 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
     if (ReturnType() == anyType) {
         arguments->returnType->typeName = block->ReturnType();
     } else if (ReturnType() != block->ReturnType() && block->ReturnType() != anyType) {
-        throw TypeMismatchException(Symbols().GetName(ReturnType()), Symbols().GetName(block->ReturnType()), line);
+        throw TypeMismatchException(Symbols().GetName(ReturnType()), Symbols().GetName(block->ReturnType()), line, "wrong return type");
     }
 
     parent->Symbols().SetType(name, ReturnType());

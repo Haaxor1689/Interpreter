@@ -72,8 +72,8 @@ private:
 };
 
 struct TypeMismatchException : public std::exception {
-    TypeMismatchException(const std::string& expected, const std::string& actual, unsigned line)
-        : message("Type mismatch error on line " + std::to_string(line) + ". Expected \"" + expected + "\" got \"" + actual + "\".") {}
+    TypeMismatchException(const std::string& expected, const std::string& actual, unsigned line, const std::string& cause = "")
+        : message("Type mismatch error on line " + std::to_string(line) + (cause.empty() ? "" : " caused by " + cause) + ". Expected \"" + expected + "\" got \"" + actual + "\".") {}
 
     char const* what() const noexcept override {
         return message.c_str();
