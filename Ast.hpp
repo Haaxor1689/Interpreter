@@ -69,8 +69,8 @@ struct Expression;
 
 struct Node {
 protected:
-    Node(Node* parent)
-        : parent(parent) {}
+    Node(Node* parent, unsigned line)
+        : parent(parent), line(line) {}
 
     Node(const Node&) = delete;
     Node(Node&&) = delete;
@@ -81,6 +81,7 @@ protected:
 
 public:
     Node* parent;
+    unsigned line;
     virtual void Print(std::ostream& os, size_t depth) const = 0;
     virtual VarID ReturnType() const = 0;
     virtual SymbolTable& Symbols() { return parent->Symbols(); }

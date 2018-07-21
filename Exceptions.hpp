@@ -12,7 +12,7 @@ struct ParseException : public std::exception {
     ParseException(Token received, const std::vector<Token::Type>& expected) {
         std::stringstream sstream;
         sstream << "Failed to parse " << received << ". Expected ";
-        if (expected.size() == 0) {
+        if (expected.empty()) {
             sstream << Token::TypeString(Token::Type::Invalid);
         } else if (expected.size() == 1) {
             sstream << Token::TypeString(expected[0]);
@@ -72,8 +72,8 @@ private:
 };
 
 struct TypeMismatchException : public std::exception {
-    TypeMismatchException(const std::string& expected, const std::string& actual)
-        : message("Type mismatch error. Expected \"" + expected + "\" got \"" + actual + "\".") {}
+    TypeMismatchException(const std::string& expected, const std::string& actual, unsigned line)
+        : message("Type mismatch error on line " + std::to_string(line) + ". Expected \"" + expected + "\" got \"" + actual + "\".") {}
 
     char const* what() const noexcept override {
         return message.c_str();
