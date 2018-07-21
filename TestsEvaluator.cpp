@@ -37,7 +37,7 @@ TEST_CASE("Evaluator") {
         INFO(t.Tree());
         CHECK(to_string(t.Evaluate("foo", { true })) == "True");
         CHECK(to_string(t.Evaluate("foo", { 123.0 })) == "123");
-        CHECK(to_string(t.Evaluate("foo", { std::string("goo") })) == "goo");
+        CHECK(to_string(t.Evaluate("foo", { "goo"s })) == "goo");
     }
 
     SECTION("If Statement") {

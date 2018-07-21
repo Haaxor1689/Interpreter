@@ -1,0 +1,5 @@
+func foo() {
+    WriteLine("hello");
+    WriteLine("world");
+    WriteLine("!!");
+}
