@@ -2,7 +2,6 @@
 
 #include <map>
 #include <variant>
-#include <algorithm>
 
 #include "Ast.hpp"
 #include "ValueOperators.hpp"
@@ -85,14 +84,17 @@ private:
         auto from = std::get<double>(forEval.Evaluate(*node.range->from));
         auto to = std::get<double>(forEval.Evaluate(*node.range->to));
 
-        auto endRule = [&](double i) {
+        localValues.emplace(node.controlVariable->name, from);
+        auto& controlVariable = GetValue(node.controlVariable->name);
+        auto end = [&](double i) {
             if (from < to) {
                 return i < (node.range->shouldIncludeLast ? to + 1 : to);
             }
             return i > (node.range->shouldIncludeLast ? to - 1 : to);
         };
 
-        for (double i = from; endRule(i); ++i) {
+        for (double i = from; end(i); from < to ? ++i : --i) {
+            controlVariable = Value(i);
             auto value = forEval.Evaluate(*node.block);
             if (forEval.didHitReturn) {
                 didHitReturn = true;
@@ -269,8 +271,8 @@ private:
         return std::visit(
             Visitor{
                 [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", 0); },
-                [&](fVoidStringPtr arg) {
-                    arg(std::get<std::string>(inIt++->second));
+                [&](fVoidValuePtr arg) {
+                    arg(inIt++->second);
                     return Value();
                 },
                 [&](fStringPtr arg) { return Value(arg()); },

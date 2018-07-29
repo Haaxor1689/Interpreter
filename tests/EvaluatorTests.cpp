@@ -137,4 +137,13 @@ TEST_CASE("While loop") {
     CHECK(ToString(p.Evaluate("foo", { 5.0, 5.0 })) == "25");
 }
 
+TEST_CASE("For loop") {
+    Parser p("examples/evaluator/ForLoop.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { 5.0 })) == "14");
+    CHECK(ToString(p.Evaluate("foo", { -3.0 })) == "-3");
+    CHECK(ToString(p.Evaluate("foo", { 2.0 })) == "2");
+}
+
 } // namespace EvaluatorTests

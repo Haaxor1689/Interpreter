@@ -781,8 +781,8 @@ Global::Global(const Token& token, const std::function<void()>& shift)
     symbols.AddSymbol("string");
     symbols.AddSymbol("number");
     
-    functions.emplace_back(this, "func Write(var message: string): void", &Write);
-    functions.emplace_back(this, "func WriteLine(var message: string): void", &WriteLine);
+    functions.emplace_back(this, "func Write(var message): void", &Write);
+    functions.emplace_back(this, "func WriteLine(var message): void", &WriteLine);
     functions.emplace_back(this, "func ReadNumber(): number", &ReadNumber);
     functions.emplace_back(this, "func ReadText(): string", &ReadText);
 

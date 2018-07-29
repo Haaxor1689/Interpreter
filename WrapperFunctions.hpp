@@ -1,12 +1,16 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 
+#include "Helpers.hpp"
+
 namespace Interpreter {
-    void Write(const std::string& string) {
+    void Write(const Value& string) {
         std::cout << string;
     }
 
-    void WriteLine(const std::string& string) {
+    void WriteLine(const Value& string) {
         std::cout << string << std::endl;
     }
 
