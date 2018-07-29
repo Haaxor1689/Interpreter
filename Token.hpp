@@ -58,7 +58,7 @@ struct Token {
     }
 
     bool IsLogicalOperator() const {
-        return text == "==" || text == "!=" || text == ">" || text == ">=" || text == "<" || text == "<=" || text == "&&" || text == "||";
+        return text == "==" || text == "!=" || text == ">" || text == ">=" || text == "<" || text == "<=" || text == "&&" || text == "||" || text == "!";
     }
 
     static std::string TypeString(Type type) {

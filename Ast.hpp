@@ -44,7 +44,11 @@ inline std::string ToString(const Value& val) {
         Visitor{
             [&](const auto&) { return "Void"s; },
             [&](bool arg) { return arg ? "True"s : "False"s; },
-            [&](double arg) { return std::to_string(arg); },
+            [&](double arg) {
+                std::ostringstream oss;
+                oss << arg;
+                return oss.str();
+            },
             [&](const std::string& arg) { return arg; },
         },
         val);
@@ -105,6 +109,16 @@ public:
             ret += "    ";
         return ret;
     }
+};
+
+struct UnaryOperation : public Node, public Rule<lUnaryOperator, Expression> {
+    std::unique_ptr<Expression> value;
+    std::string operation;
+    VarID returnType;
+
+    UnaryOperation(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override;
 };
 
 struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, Expression> {
@@ -172,7 +186,7 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
 };
 
 struct Expression : public Node, public RuleGroup<BinaryOperation, VariableRef, lTrue, lFalse, lNumber, lString, VariableDef> {
-    std::variant<std::monostate, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
+    std::variant<std::monostate, UnaryOperation, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;

@@ -5,6 +5,30 @@
 
 namespace Interpreter {
 
+UnaryOperation::UnaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line) {
+    lUnaryOperator::RequireToken(token);
+    operation = token.text;
+    shift();
+
+    value = std::make_unique<Expression>(this, token, shift);
+
+    returnType = token.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : value->ReturnType();
+}
+
+void UnaryOperation::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "UnaryOperation: {\n";
+    os << Indent(depth + 1) << "Operator: " << operation << "\n";
+    os << Indent(depth + 1) << "Value: {\n";
+    value->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth) << "}\n";
+}
+
+VarID UnaryOperation::ReturnType() const {
+    return returnType;
+}
+
 BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     lBinaryOperator::RequireToken(token);
@@ -244,7 +268,10 @@ VarID FunctionCall::ReturnType() const {
 
 Expression::Expression(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
-    if (lBinaryOperator::MatchToken(token)) {
+    if (lUnaryOperator::MatchToken(token)) {
+        lUnaryOperator::RequireToken(token);
+        expression.emplace<UnaryOperation>(this, token, shift);
+    } else if (lBinaryOperator::MatchToken(token)) {
         lBinaryOperator::RequireToken(token);
         expression.emplace<BinaryOperation>(this, token, shift);
     } else if (lIdentifier::MatchToken(token)) {

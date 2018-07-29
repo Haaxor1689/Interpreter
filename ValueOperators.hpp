@@ -78,4 +78,31 @@ arithmeticOperators(/);
 logicalOperators(&&);
 logicalOperators(||);
 
+inline Value operator!(const Value& value) {
+return std::visit(
+    Visitor{
+        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](bool arg) { return Value(!arg); },
+    },
+    value);
+}
+
+inline Value operator++(const Value& value) {
+return std::visit(
+    Visitor{
+        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](double arg) { return Value(++arg); },
+    },
+    value);
+}
+
+inline Value operator--(const Value& value) {
+return std::visit(
+    Visitor{
+        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](double arg) { return Value(--arg); },
+    },
+    value);
+}
+
 } // namespace Interpreter

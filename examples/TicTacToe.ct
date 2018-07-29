@@ -21,7 +21,7 @@ func Play(): string {
 
 	var currentPlayer = "X";
 
-	while shouldEnd == false {
+	while !shouldEnd {
 		WriteLine(+ "Player " + currentPlayer "'s turn");
 
 		WriteLine("Write column number:");

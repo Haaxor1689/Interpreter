@@ -192,6 +192,18 @@ private:
         throw std::runtime_error("Operation " + node.operation + " not implemented.");
     }
 
+    Value Evaluate(const UnaryOperation& node) {
+        if (node.operation == "!") {
+            return Value(!Evaluate(*node.value));
+        } else if (node.operation == "++") {
+            return Value(++Evaluate(*node.value));
+        } else if (node.operation == "--") {
+            return Value(--Evaluate(*node.value));
+        }
+
+        throw std::runtime_error("Operation " + node.operation + " not implemented.");
+    }
+
     Value Evaluate(const ExtFunctionType& func) {
         auto inIt = localValues.begin();
         return std::visit(
