@@ -100,4 +100,32 @@ TEST_CASE("Recursive call") {
     CHECK(ToString(p.Evaluate("Factorial", { 4.0 })) == "24");
 }
 
+TEST_CASE("Negation operator") {
+    Parser p("examples/evaluator/NegationOperator.ct");
+    INFO(p.Tree());
+
+    CHECK_NOTHROW(p.Evaluate("foo", { bool() }));
+    CHECK_NOTHROW(std::get<bool>(p.Evaluate("foo", { bool() })));
+
+    CHECK(ToString(p.Evaluate("foo", { true })) == "False");
+    CHECK(ToString(p.Evaluate("foo", { false })) == "True");
+    
+    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "No operator for this type.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { 1.0 }), "No operator for this type.");
+}
+
+TEST_CASE("Increment operator") {
+    Parser p("examples/evaluator/IncrementOperator.ct");
+    INFO(p.Tree());
+
+    CHECK_NOTHROW(p.Evaluate("foo", { double() }));
+    CHECK_NOTHROW(std::get<double>(p.Evaluate("foo", { double() })));
+
+    CHECK(ToString(p.Evaluate("foo", { 1.0 })) == "2");
+    CHECK(ToString(p.Evaluate("foo", { -1.0 })) == "0");
+    
+    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "No operator for this type.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { true }), "No operator for this type.");
+}
+
 } // namespace EvaluatorTests

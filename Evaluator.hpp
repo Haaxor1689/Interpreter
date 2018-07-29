@@ -52,7 +52,7 @@ private:
         for (const Statement& statement : node.statements) {
             Value value = std::visit(
                 Visitor{
-                    [&](const auto&) { return Value(); },
+                    [&](const auto&) -> Value { throw; },
                     [&](const Return& arg) { 
                         didHitReturn = true; 
                         return Evaluate(*arg.value);
@@ -117,7 +117,8 @@ private:
     Value Evaluate(const Expression& node) {
         return std::visit(
             Visitor{
-                [&](const auto&) { return Value(); },
+                [&](const auto&) -> Value { throw; },
+                [&](const UnaryOperation& arg) { return Evaluate(arg); },
                 [&](const BinaryOperation& arg) { return Evaluate(arg); },
                 [&](const VariableRef& arg) { return GetValue(arg.name); },
                 [&](const FunctionCall& arg) { return Evaluate(arg); },
@@ -208,7 +209,7 @@ private:
         auto inIt = localValues.begin();
         return std::visit(
             Visitor{
-                [&](const auto&) { return Value(); },
+                [&](const auto&) -> Value { throw; },
                 [&](fVoidStringPtr arg) {
                     arg(std::get<std::string>(inIt++->second));
                     return Value();

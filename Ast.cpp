@@ -314,6 +314,7 @@ void Expression::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
             [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
+            [&, depth](const UnaryOperation& arg) { arg.Print(os, depth); },
             [&, depth](const BinaryOperation& arg) { arg.Print(os, depth); },
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
@@ -331,6 +332,7 @@ VarID Expression::ReturnType() const {
     return std::visit(
         Visitor{
             [&](const auto&) -> VarID { throw; },
+            [&](const UnaryOperation& arg) { return arg.ReturnType(); },
             [&](const BinaryOperation& arg) { return arg.ReturnType(); },
             [&](const VariableRef& arg) { return arg.ReturnType(); },
             [&](const FunctionCall& arg) { return arg.ReturnType(); },
