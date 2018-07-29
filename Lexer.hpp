@@ -28,7 +28,7 @@ class Lexer {
         std::make_pair("&&", Token::Type::BinaryOperator), std::make_pair("==", Token::Type::BinaryOperator),
         std::make_pair("!=", Token::Type::BinaryOperator), std::make_pair("<=", Token::Type::BinaryOperator),
         std::make_pair(">=", Token::Type::BinaryOperator), std::make_pair("..", Token::Type::BinaryOperator),
-        std::make_pair("...", Token::Type::BinaryOperator), std::make_pair("..<", Token::Type::BinaryOperator)
+        std::make_pair("...", Token::Type::RangeOperator), std::make_pair("..<", Token::Type::RangeOperator)
     };
     const std::map<char, Token::Type> special = {
         std::make_pair('(', Token::Type::ParenOpen), std::make_pair(')', Token::Type::ParenClose),

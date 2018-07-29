@@ -80,6 +80,7 @@ using lTrue = TokenType<Token::Type::True>;
 using lFalse = TokenType<Token::Type::False>;
 using lUnaryOperator = TokenType<Token::Type::UnaryOperator>;
 using lBinaryOperator = TokenType<Token::Type::BinaryOperator>;
+using lRangeOperator = TokenType<Token::Type::RangeOperator>;
 
 struct Block;
 struct Expression;
@@ -109,6 +110,16 @@ public:
             ret += "    ";
         return ret;
     }
+};
+
+struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> {
+    std::unique_ptr<Expression> from;
+    std::unique_ptr<Expression> to;
+    bool shouldIncludeLast;
+
+    Range(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override;
 };
 
 struct UnaryOperation : public Node, public Rule<lUnaryOperator, Expression> {
@@ -253,7 +264,7 @@ struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
 
 struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
     std::unique_ptr<VariableDef> variable;
-    std::unique_ptr<Expression> range;
+    std::unique_ptr<Range> range;
     std::unique_ptr<Block> block;
     SymbolTable symbols;
 

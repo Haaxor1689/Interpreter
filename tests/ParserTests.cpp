@@ -331,4 +331,34 @@ TEST_CASE("Function and variables types") {
         "}\n");
 }
 
+TEST_CASE("Range parser") {
+    Parser p("examples/parser/ParserRange.ct");
+    ostringstream oss;
+    oss << p.Tree();
+    CHECK(oss.str() == prefix() +
+        "            For: {\n"
+        "                Symbols: { 14:b, }\n"
+        "                Control: {\n"
+        "                    Definition: {\n"
+        "                        Variable: b\n"
+        "                        Type: any\n"
+        "                    }\n"
+        "                }\n"
+        "                In: {\n"
+        "                    Range: {\n"
+        "                        From: {\n"
+        "                            Number: 0\n"
+        "                        }\n"
+        "                        To: {\n"
+        "                            Number: 3\n"
+        "                        }\n"
+        "                        IncludeLast: True\n"
+        "                    }\n"
+        "                }\n"
+        "                Block: {\n"
+        "                }\n"
+        "            }\n"
+        + postfix);
+}
+
 } // namespace ParserTests

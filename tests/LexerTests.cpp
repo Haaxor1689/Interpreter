@@ -184,7 +184,7 @@ TEST_CASE("More keywords on complex example") {
     CHECK(tokens[23] == Token("i", Token::Type::Identifier, 7));
     CHECK(tokens[24] == Token("in", Token::Type::In, 7));
     CHECK(tokens[25] == Token("0", Token::Type::Number, 7));
-    CHECK(tokens[26] == Token("..<", Token::Type::BinaryOperator, 7));
+    CHECK(tokens[26] == Token("..<", Token::Type::RangeOperator, 7));
     CHECK(tokens[27] == Token("string01", Token::Type::Identifier, 7));
     CHECK(tokens[29] == Token("size", Token::Type::Identifier, 7));
     CHECK(tokens[32] == Token("[", Token::Type::SquareOpen, 8));

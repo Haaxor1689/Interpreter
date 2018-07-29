@@ -5,6 +5,33 @@
 
 namespace Interpreter {
 
+Range::Range(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line) {
+    from = std::make_unique<Expression>(this, token, shift);
+
+    lRangeOperator::RequireToken(token);
+    shouldIncludeLast = token.ShouldIncludeLast();
+    shift();
+
+    to = std::make_unique<Expression>(this, token, shift);
+}
+
+void Range::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Range: {\n";
+    os << Indent(depth + 1) << "From: {\n";
+    from->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "To: {\n";
+    to->Print(os, depth + 2);
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "IncludeLast: " << (shouldIncludeLast ? "True" : "False") << "\n";
+    os << Indent(depth) << "}\n";
+}
+
+VarID Range::ReturnType() const {
+    throw;
+}
+
 UnaryOperation::UnaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     lUnaryOperator::RequireToken(token);
@@ -319,8 +346,8 @@ void Expression::Print(std::ostream& os, size_t depth) const {
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
             [&, depth](const VariableAssign& arg) { arg.Print(os, depth); },
-            [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "true" : "false") << "\n"; },
-            [&, depth](double arg) { os << Indent(depth) << "Double: " << arg << "\n"; },
+            [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "True" : "False") << "\n"; },
+            [&, depth](double arg) { os << Indent(depth) << "Number: " << arg << "\n"; },
             [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
         },
@@ -505,15 +532,17 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
     lIn::RequireToken(token);
     shift();
 
-    range = std::make_unique<Expression>(this, token, shift);
+    range = std::make_unique<Range>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
 }
 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "For: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    variable ? variable->Print(os, depth + 1) : void();
-    os << Indent(depth + 1) << "Range: {\n";
+    os << Indent(depth + 1) << "Control: {\n";
+    variable ? variable->Print(os, depth + 2) : void();
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "In: {\n";
     range ? range->Print(os, depth + 2) : void();
     os << Indent(depth + 1) << "}\n";
     block ? block->Print(os, depth + 1) : void();

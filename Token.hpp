@@ -11,6 +11,7 @@ struct Token {
         Number,
         UnaryOperator,
         BinaryOperator,
+        RangeOperator,
         ParenOpen,
         ParenClose,
         SquareOpen,
@@ -61,6 +62,10 @@ struct Token {
         return text == "==" || text == "!=" || text == ">" || text == ">=" || text == "<" || text == "<=" || text == "&&" || text == "||" || text == "!";
     }
 
+    bool ShouldIncludeLast() const {
+        return text == "...";
+    }
+
     static std::string TypeString(Type type) {
         switch (type) {
         case Identifier:
@@ -73,6 +78,8 @@ struct Token {
             return "Unary Operator";
         case BinaryOperator:
             return "Binary Operator";
+        case RangeOperator:
+            return "Range Operator";
         case ParenOpen:
         case ParenClose:
         case SquareOpen:
