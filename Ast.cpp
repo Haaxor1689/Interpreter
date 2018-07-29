@@ -9,23 +9,38 @@ Range::Range(Node* parent, const Token& token, const std::function<void()>& shif
     : Node(parent, token.line) {
     from = std::make_unique<Expression>(this, token, shift);
 
+    if (!lRangeOperator::MatchToken(token)) {
+        return;
+    }
+
     lRangeOperator::RequireToken(token);
     shouldIncludeLast = token.ShouldIncludeLast();
     shift();
 
     to = std::make_unique<Expression>(this, token, shift);
+    
+    auto anyType = Symbols().GetSymbol("any").id;
+    auto numberType = Symbols().GetSymbol("number").id;
+    if (from->ReturnType() != anyType && from->ReturnType() != numberType) {
+        throw TypeMismatchException(Symbols().GetName(numberType), Symbols().GetName(from->ReturnType()), line, "range must be a number");
+    }
+    if (to->ReturnType() != anyType && to->ReturnType() != numberType) {
+        throw TypeMismatchException(Symbols().GetName(numberType), Symbols().GetName(to->ReturnType()), line, "range must be a number");
+    }
 }
 
 void Range::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Range: {\n";
-    os << Indent(depth + 1) << "From: {\n";
-    from->Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth + 1) << "To: {\n";
-    to->Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth + 1) << "IncludeLast: " << (shouldIncludeLast ? "True" : "False") << "\n";
-    os << Indent(depth) << "}\n";
+    if (to) {
+        os << Indent(depth) << "From: {\n";
+        from->Print(os, depth + 1);
+        os << Indent(depth ) << "}\n";
+        os << Indent(depth) << "To: {\n";
+        to->Print(os, depth + 1);
+        os << Indent(depth) << "}\n";
+        os << Indent(depth) << "IncludeLast: " << (shouldIncludeLast ? "True" : "False") << "\n";
+    } else {
+        from->Print(os, depth);
+    }
 }
 
 VarID Range::ReturnType() const {
@@ -91,14 +106,7 @@ VariableAssign::VariableAssign(Node* parent, const Token& token, const std::func
 
     value = std::make_unique<Expression>(this, token, shift);
 
-    auto anyType = Symbols().GetSymbol("any").id;
-    auto expressionType = value->ReturnType();
-    if (Symbols().GetType(name) == anyType) {
-        Symbols().SetType(name, expressionType);
-    }
-    if (expressionType != anyType && Symbols().GetType(name) != expressionType) {
-        throw TypeMismatchException(Symbols().GetName(Symbols().GetType(name)), Symbols().GetName(expressionType), line);
-    }
+    MatchType(name, value->ReturnType());
 }
 
 void VariableAssign::Print(std::ostream& os, size_t depth) const {
@@ -112,28 +120,6 @@ void VariableAssign::Print(std::ostream& os, size_t depth) const {
 
 VarID VariableAssign::ReturnType() const {
     return Symbols().GetType(name);
-}
-
-TypeName::TypeName(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line) {
-    
-    if (lColon::MatchToken(token)) {
-        shift();
-            
-        lIdentifier::RequireToken(token);
-        typeName = Symbols().GetSymbol(token.text).id;
-        shift();
-    } else {
-        typeName = Symbols().GetSymbol("any").id;
-    }
-}
-
-void TypeName::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Type: " << Symbols().GetName(typeName) << "\n";
-}
-
-VarID TypeName::ReturnType() const {
-    return typeName;
 }
 
 VariableRef::VariableRef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -160,30 +146,29 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
     name = Symbols().AddSymbol(token.text);
     shift();
 
-    type = std::make_unique<TypeName>(this, token, shift);
+    if (lColon::MatchToken(token)) {
+        shift();
+            
+        lIdentifier::RequireToken(token);
+        Symbols().SetType(name, Symbols().GetSymbol(token.text).id);
+        shift();
+    } else {
+        Symbols().SetType(name, Symbols().GetSymbol("any").id);
+    }
 
     if (lBinaryOperator::MatchToken(token) && token.text == "=") {
         shift();
 
         value = std::make_unique<Expression>(this, token, shift);
 
-        auto anyType = Symbols().GetSymbol("any").id;
-        if (ReturnType() == anyType) {
-            type->typeName = value->ReturnType();
-        } else if (ReturnType() != value->ReturnType() && value->ReturnType() != anyType) {
-            throw TypeMismatchException(Symbols().GetName(ReturnType()), Symbols().GetName(value->ReturnType()), line);
-        }
+        MatchType(name, value->ReturnType());
     }
-    
-    Symbols().SetType(name, ReturnType());
 }
 
 void VariableDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Definition: {\n";
     os << Indent(depth + 1) << "Variable: " << Symbols().GetName(name) << "\n";
-    if (type) {
-        type->Print(os, depth + 1);
-    }
+    os << Indent(depth + 1) << "Type: " << Symbols().GetName(Symbols().GetType(name)) << "\n";
     if (value) {
         os << Indent(depth + 1) << "Value: {\n";
         value->Print(os, depth + 2);
@@ -193,7 +178,7 @@ void VariableDef::Print(std::ostream& os, size_t depth) const {
 }
 
 VarID VariableDef::ReturnType() const {
-    return type->typeName;
+    return Symbols().GetType(name);
 }
 
 Arguments::Arguments(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -215,8 +200,6 @@ Arguments::Arguments(Node* parent, const Token& token, const std::function<void(
 
     lParenClose::RequireToken(token);
     shift();
-    
-    returnType = std::make_unique<TypeName>(this, token, shift);
 }
 
 void Arguments::Print(std::ostream& os, size_t depth) const {
@@ -224,11 +207,6 @@ void Arguments::Print(std::ostream& os, size_t depth) const {
     for (const auto& arg : arguments)
         arg.Print(os, depth + 1);
     os << Indent(depth) << "}\n";
-    if (returnType) {
-        os << Indent(depth) << "Returns: {\n";
-        returnType->Print(os, depth + 1);
-        os << Indent(depth) << "}\n";
-    }
 }
 
 FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -358,15 +336,15 @@ void Expression::Print(std::ostream& os, size_t depth) const {
 VarID Expression::ReturnType() const {
     return std::visit(
         Visitor{
-            [&](const auto&) -> VarID { throw; },
+            [&](const auto&) -> VarID { throw InterpreterException("Unknown operation.", line); },
             [&](const UnaryOperation& arg) { return arg.ReturnType(); },
             [&](const BinaryOperation& arg) { return arg.ReturnType(); },
             [&](const VariableRef& arg) { return arg.ReturnType(); },
             [&](const FunctionCall& arg) { return arg.ReturnType(); },
             [&](const VariableAssign& arg) { return arg.ReturnType(); },
-            [&](bool arg) { return Symbols().GetSymbol("bool").id; },
-            [&](double arg) { return Symbols().GetSymbol("number").id; },
-            [&](const std::string& arg) { return Symbols().GetSymbol("string").id; },
+            [&](bool) { return Symbols().GetSymbol("bool").id; },
+            [&](double) { return Symbols().GetSymbol("number").id; },
+            [&](const std::string&) { return Symbols().GetSymbol("string").id; },
             [&](const VariableDef& arg) { return arg.ReturnType(); },
         },
         expression
@@ -375,7 +353,8 @@ VarID Expression::ReturnType() const {
 
 WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), symbols(&parent->Symbols()) {
-    if ((isDoWhile = lDo::MatchToken(token))) {
+    isDoWhile = lDo::MatchToken(token);
+    if (isDoWhile) {
         lDo::RequireToken(token);
         shift();
 
@@ -527,7 +506,10 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
     lFor::RequireToken(token);
     shift();
 
-    variable = std::make_unique<VariableDef>(this, token, shift);
+    controlVariable = std::make_unique<VariableDef>(this, token, shift);
+    if (controlVariable->value) {
+        throw InterpreterException("For loop control variable can't have an assigned value.", line);
+    }
 
     lIn::RequireToken(token);
     shift();
@@ -539,8 +521,8 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "For: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "Control: {\n";
-    variable ? variable->Print(os, depth + 2) : void();
+    os << Indent(depth + 1) << "ControlVariable: {\n";
+    controlVariable ? controlVariable->Print(os, depth + 2) : void();
     os << Indent(depth + 1) << "}\n";
     os << Indent(depth + 1) << "In: {\n";
     range ? range->Print(os, depth + 2) : void();
@@ -592,7 +574,7 @@ Statement::Statement(Node* parent, const Token& token, const std::function<void(
         lSemicolon::RequireToken(token);
         shift();
     } else {
-        throw ParseException(token, Statement::ExpectedToken());
+        throw ParseException(token, ExpectedToken());
     }
 }
 
@@ -613,12 +595,12 @@ void Statement::Print(std::ostream& os, size_t depth) const {
 VarID Statement::ReturnType() const {
     return std::visit(
         Visitor{
-            [&](const auto&) -> VarID { throw; },
+            [&](const auto&) -> VarID { throw InterpreterException("Unknown operation.", line); },
             [&](const Return& arg) { return arg.ReturnType(); },
             [&](const ForExpr& arg) { return arg.ReturnType(); },
             [&](const IfExpr& arg) { return arg.ReturnType(); },
             [&](const WhileExpr& arg) { return arg.ReturnType(); },
-            [&](const Expression& arg) { return 0u; },
+            [&](const Expression&) { return 0u; },
         },
         expression
     );
@@ -627,8 +609,8 @@ VarID Statement::ReturnType() const {
 bool Statement::HasReturn() const {
     return std::visit(
         Visitor{
-            [&](const auto&) -> bool { throw; },
-            [&](const Return& arg) { return true; },
+            [&](const auto&) -> bool { throw InterpreterException("Unknown operation.", line); },
+            [&](const Return&) { return true; },
             [&](const ForExpr& arg) { return arg.block->HasReturn(); },
             [&](const IfExpr& arg) {
                 if (arg.ifStatement->block->HasReturn()) {
@@ -644,7 +626,7 @@ bool Statement::HasReturn() const {
                 return arg.elseStatement && arg.elseStatement->block->HasReturn();
             },
             [&](const WhileExpr& arg) { return arg.block->HasReturn(); },
-            [&](const Expression& arg) { return false; },
+            [&](const Expression&) { return false; },
         },
         expression
     );
@@ -730,7 +712,16 @@ FunctionDef::FunctionDef(Node* parent, const std::string& signature, ExtFunction
     shift();
 
     arguments = std::make_unique<Arguments>(this, token, shift);
-    parent->Symbols().SetType(name, arguments->returnType->typeName);
+    
+    if (lColon::MatchToken(token)) {
+        shift();
+            
+        lIdentifier::RequireToken(token);
+        Symbols().SetType(name, Symbols().GetSymbol(token.text).id);
+        shift();
+    } else {
+        Symbols().SetType(name, Symbols().GetSymbol("any").id);
+    }
 }
 
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -743,20 +734,23 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
     shift();
 
     arguments = std::make_unique<Arguments>(this, token, shift);
-    block = std::make_unique<Block>(this, token, shift);
+    
+    if (lColon::MatchToken(token)) {
+        shift();
+            
+        lIdentifier::RequireToken(token);
+        Symbols().SetType(name, Symbols().GetSymbol(token.text).id);
+        shift();
+    } else {
+        Symbols().SetType(name, Symbols().GetSymbol("any").id);
+    }
 
-    // Check return type
-    auto anyType = Symbols().GetSymbol("any").id;
+    block = std::make_unique<Block>(this, token, shift);
     if (block->ReturnType() == 0) {
         block->returnType = Symbols().GetSymbol("void").id;
     }
-    if (ReturnType() == anyType) {
-        arguments->returnType->typeName = block->ReturnType();
-    } else if (ReturnType() != block->ReturnType() && block->ReturnType() != anyType) {
-        throw TypeMismatchException(Symbols().GetName(ReturnType()), Symbols().GetName(block->ReturnType()), line, "wrong return type");
-    }
 
-    parent->Symbols().SetType(name, ReturnType());
+    MatchType(name, block->ReturnType(), "wrong return type");
 }
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
@@ -767,12 +761,15 @@ void FunctionDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
     arguments ? arguments->Print(os, depth + 1) : void();
+    os << Indent(depth + 1) << "Returns: {\n";
+    os << Indent(depth + 2) << "Type: " << Symbols().GetName(Symbols().GetType(name)) << "\n";
+    os << Indent(depth + 1) << "}\n";
     block ? block->Print(os, depth + 1) : void();
     os << Indent(depth) << "}\n";
 }
 
 VarID FunctionDef::ReturnType() const {
-    return arguments->returnType->typeName;
+    return Symbols().GetType(name);
 }
 
 Global::Global(const Token& token, const std::function<void()>& shift)

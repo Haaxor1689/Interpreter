@@ -8,6 +8,26 @@
 
 namespace Interpreter {
 
+struct InternalException : public std::exception {
+    InternalException(const std::string& message) : message(message) {}
+    char const* what() const noexcept override {
+        return message.c_str();
+    }
+
+private:
+    std::string message;
+};
+
+struct InterpreterException : public std::exception {
+    InterpreterException(const std::string& message, unsigned line) : message("An exception occured on line " + std::to_string(line) + ". Message: " + message) {}
+    char const* what() const noexcept override {
+        return message.c_str();
+    }
+
+private:
+    std::string message;
+};
+
 struct ParseException : public std::exception {
     ParseException(Token received, const std::vector<Token::Type>& expected) {
         std::stringstream sstream;

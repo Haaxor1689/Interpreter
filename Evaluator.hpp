@@ -22,7 +22,7 @@ public:
     static Value Evaluate(const Global& root, const std::string& function, const std::list<Value>& arguments) {
         const FunctionDef& func = root.GetFunction(function);
         if (arguments.size() != func.arguments->arguments.size()) {
-            throw std::runtime_error("Wrong number of arguments.");
+            throw InterpreterException("Wrong number of arguments.", func.line);
         }
 
         Evaluator eval(nullptr, root);
@@ -45,14 +45,14 @@ private:
             }
             ptr = ptr->parent;
         }
-        throw std::runtime_error("Variable with id " + std::to_string(variable) + " not found.");
+        throw InternalException("Variable with id " + std::to_string(variable) + " not found.");
     }
 
     Value Evaluate(const Block& node) {
         for (const Statement& statement : node.statements) {
             Value value = std::visit(
                 Visitor{
-                    [&](const auto&) -> Value { throw; },
+                    [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", node.line); },
                     [&](const Return& arg) { 
                         didHitReturn = true; 
                         return Evaluate(*arg.value);
@@ -79,7 +79,27 @@ private:
         return Value();
     }
 
-    Value Evaluate(const ForExpr&) {
+    Value Evaluate(const ForExpr& node) {
+        auto forEval = Evaluator(this, root);
+
+        auto from = std::get<double>(forEval.Evaluate(*node.range->from));
+        auto to = std::get<double>(forEval.Evaluate(*node.range->to));
+
+        auto endRule = [&](double i) {
+            if (from < to) {
+                return i < (node.range->shouldIncludeLast ? to + 1 : to);
+            }
+            return i > (node.range->shouldIncludeLast ? to - 1 : to);
+        };
+
+        for (double i = from; endRule(i); ++i) {
+            auto value = forEval.Evaluate(*node.block);
+            if (forEval.didHitReturn) {
+                didHitReturn = true;
+                return value;
+            }
+        }
+
         return Value();
     }
 
@@ -136,10 +156,16 @@ private:
     Value Evaluate(const Expression& node) {
         return std::visit(
             Visitor{
-                [&](const auto&) -> Value { throw; },
+                [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", node.line); },
                 [&](const UnaryOperation& arg) { return Evaluate(arg); },
                 [&](const BinaryOperation& arg) { return Evaluate(arg); },
-                [&](const VariableRef& arg) { return GetValue(arg.name); },
+                [&](const VariableRef& arg) {
+                    try {
+                        return GetValue(arg.name);
+                    } catch (const InternalException& err) {
+                        throw InterpreterException(err.what(), arg.line);
+                    }
+                },
                 [&](const FunctionCall& arg) { return Evaluate(arg); },
                 [&](const VariableAssign& arg) { return Evaluate(arg); },
                 [&](bool arg) { return Value(arg); },
@@ -173,62 +199,76 @@ private:
 
     Value Evaluate(const VariableDef& node) {
         localValues.emplace(node.name, node.value ? Evaluate(*node.value) : Value());
-        return GetValue(node.name);
+        try {
+            return GetValue(node.name);
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
+        }
     }
 
     Value Evaluate(const VariableAssign& node) {
-        auto& value = GetValue(node.name);
-        value = Evaluate(*node.value);
-        return value;
+        try {
+            auto& value = GetValue(node.name);
+            value = Evaluate(*node.value);
+            return value;
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
+        }
     }
 
     Value Evaluate(const BinaryOperation& node) {
-        if (node.operation == "==") {
-            return Value(Evaluate(*node.lhs) == Evaluate(*node.rhs));
-        } else if (node.operation == "!=") {
-            return Value(Evaluate(*node.lhs) != Evaluate(*node.rhs));
-        } else if (node.operation == "<") {
-            return Value(Evaluate(*node.lhs) < Evaluate(*node.rhs));
-        } else if (node.operation == "<=") {
-            return Value(Evaluate(*node.lhs) <= Evaluate(*node.rhs));
-        } else if (node.operation == ">") {
-            return Value(Evaluate(*node.lhs) > Evaluate(*node.rhs));
-        } else if (node.operation == ">=") {
-            return Value(Evaluate(*node.lhs) >= Evaluate(*node.rhs));
-        } else if (node.operation == "+") {
-            return Evaluate(*node.lhs) + Evaluate(*node.rhs);
-        } else if (node.operation == "-") {
-            return Value(Evaluate(*node.lhs) - Evaluate(*node.rhs));
-        } else if (node.operation == "*") {
-            return Value(Evaluate(*node.lhs) * Evaluate(*node.rhs));
-        } else if (node.operation == "/") {
-            return Value(Evaluate(*node.lhs) / Evaluate(*node.rhs));
-        } else if (node.operation == "&&") {
-            return Value(Evaluate(*node.lhs) && Evaluate(*node.rhs));
-        } else if (node.operation == "||") {
-            return Value(Evaluate(*node.lhs) || Evaluate(*node.rhs));
+        try {
+            if (node.operation == "==") {
+                return Value(Evaluate(*node.lhs) == Evaluate(*node.rhs));
+            } else if (node.operation == "!=") {
+                return Value(Evaluate(*node.lhs) != Evaluate(*node.rhs));
+            } else if (node.operation == "<") {
+                return Value(Evaluate(*node.lhs) < Evaluate(*node.rhs));
+            } else if (node.operation == "<=") {
+                return Value(Evaluate(*node.lhs) <= Evaluate(*node.rhs));
+            } else if (node.operation == ">") {
+                return Value(Evaluate(*node.lhs) > Evaluate(*node.rhs));
+            } else if (node.operation == ">=") {
+                return Value(Evaluate(*node.lhs) >= Evaluate(*node.rhs));
+            } else if (node.operation == "+") {
+                return Evaluate(*node.lhs) + Evaluate(*node.rhs);
+            } else if (node.operation == "-") {
+                return Value(Evaluate(*node.lhs) - Evaluate(*node.rhs));
+            } else if (node.operation == "*") {
+                return Value(Evaluate(*node.lhs) * Evaluate(*node.rhs));
+            } else if (node.operation == "/") {
+                return Value(Evaluate(*node.lhs) / Evaluate(*node.rhs));
+            } else if (node.operation == "&&") {
+                return Value(Evaluate(*node.lhs) && Evaluate(*node.rhs));
+            } else if (node.operation == "||") {
+                return Value(Evaluate(*node.lhs) || Evaluate(*node.rhs));
+            }
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
         }
-
-        throw std::runtime_error("Operation " + node.operation + " not implemented.");
+        throw InterpreterException("Operator " + node.operation + " not implemented.", node.line);
     }
 
     Value Evaluate(const UnaryOperation& node) {
-        if (node.operation == "!") {
-            return Value(!Evaluate(*node.value));
-        } else if (node.operation == "++") {
-            return Value(++Evaluate(*node.value));
-        } else if (node.operation == "--") {
-            return Value(--Evaluate(*node.value));
+        try {
+            if (node.operation == "!") {
+                return Value(!Evaluate(*node.value));
+            } else if (node.operation == "++") {
+                return Value(++Evaluate(*node.value));
+            } else if (node.operation == "--") {
+                return Value(--Evaluate(*node.value));
+            }
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
         }
-
-        throw std::runtime_error("Operation " + node.operation + " not implemented.");
+        throw InterpreterException("Operator " + node.operation + " not implemented.", node.line);
     }
 
     Value Evaluate(const ExtFunctionType& func) {
         auto inIt = localValues.begin();
         return std::visit(
             Visitor{
-                [&](const auto&) -> Value { throw; },
+                [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", 0); },
                 [&](fVoidStringPtr arg) {
                     arg(std::get<std::string>(inIt++->second));
                     return Value();

@@ -49,7 +49,7 @@ class Lexer {
 
 public:
     Lexer(std::istream& stream)
-        : source(stream), current(source.get()) {}
+        : source(stream), current(char(source.get())) {}
 
     Token Next() {
         RemoveWhitespace();
@@ -72,7 +72,7 @@ public:
             return Operator();
 
         if (auto it = special.find(current); it != special.end()) {
-            current = source.get();
+            current = char(source.get());
             return Token(std::string(1, it->first), it->second, line);
         }
 
@@ -89,7 +89,7 @@ private:
             } else if (current == '#') {
                 isComment = true;
             }
-            current = source.get();
+            current = char(source.get());
         }
     }
 
@@ -102,7 +102,7 @@ private:
     Token Identifier() {
         do {
             buffer += current;
-        } while (IsIdentifier(current = source.get()));
+        } while (IsIdentifier(current = char(source.get())));
 
         if (auto it = keywords.find(buffer); it != keywords.end())
             return PopToken(it->second);
@@ -112,7 +112,7 @@ private:
 
     Token Minus() {
         buffer += '-';
-        current = source.get();
+        current = char(source.get());
         if (IsNumber(current)) {
             return Number();
         } else if (IsOperator(current)) {
@@ -134,7 +134,7 @@ private:
                 hasNumberAfterDecimal = true;
             }
             buffer += current;
-        } while (IsNumber(current = source.get()));
+        } while (IsNumber(current = char(source.get())));
 
         if (isInvalid || (isDecimal && !hasNumberAfterDecimal))
             return PopToken(Token::Type::Invalid);
@@ -148,16 +148,16 @@ private:
                 return PopToken(Token::Type::Invalid);
             }
             buffer += current;
-        } while (!IsStringMark(current = source.get()));
+        } while (!IsStringMark(current = char(source.get())));
         buffer += current;
-        current = source.get();
+        current = char(source.get());
         return PopToken(Token::Type::String);
     }
 
     Token Operator() {
         do {
             buffer += current;
-        } while (IsOperator(current = source.get()));
+        } while (IsOperator(current = char(source.get())));
 
         if (auto it = operators.find(buffer); it != operators.end())
             return PopToken(it->second);
@@ -166,7 +166,7 @@ private:
 
     Token Invalid() {
         buffer += current;
-        current = source.get();
+        current = char(source.get());
         return PopToken(Token::Type::Invalid);
     }
 

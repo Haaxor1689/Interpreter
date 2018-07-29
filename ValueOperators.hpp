@@ -8,7 +8,7 @@ namespace Interpreter {
 inline Value operator##name(const Value& lhs, double rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](double arg) { return Value(arg ##name rhs); },\
         },\
         lhs);\
@@ -17,7 +17,7 @@ inline Value operator##name(const Value& lhs, double rhs) {\
 inline Value operator##name(const Value& lhs, const std::string& rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](const std::string& arg) { return Value(arg ##name rhs); },\
         },\
         lhs);\
@@ -26,7 +26,7 @@ inline Value operator##name(const Value& lhs, const std::string& rhs) {\
 inline Value operator##name(const Value& lhs, const Value& rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](double arg) { return lhs ##name arg; },\
             [&](const std::string& arg) { return lhs ##name arg; },\
         },\
@@ -37,7 +37,7 @@ inline Value operator##name(const Value& lhs, const Value& rhs) {\
 inline Value operator##name(const Value& lhs, bool rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](bool arg) { return Value(arg ##name rhs); },\
         },\
         lhs);\
@@ -46,7 +46,7 @@ inline Value operator##name(const Value& lhs, bool rhs) {\
 inline Value operator##name(const Value& lhs, double rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](double arg) { return Value(arg ##name rhs); },\
         },\
         lhs);\
@@ -55,7 +55,7 @@ inline Value operator##name(const Value& lhs, double rhs) {\
 inline Value operator##name(const Value& lhs, const std::string& rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](const std::string& arg) { return Value(arg ##name rhs); },\
         },\
         lhs);\
@@ -64,7 +64,7 @@ inline Value operator##name(const Value& lhs, const std::string& rhs) {\
 inline Value operator##name(const Value& lhs, const Value& rhs) {\
     return std::visit(\
         Visitor{\
-            [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },\
+            [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },\
             [&](bool arg) { return lhs ##name arg; },\
             [&](double arg) { return lhs ##name arg; },\
             [&](const std::string& arg) { return lhs ##name arg; },\
@@ -81,7 +81,7 @@ logicalOperators(||);
 inline Value operator!(const Value& value) {
 return std::visit(
     Visitor{
-        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },
         [&](bool arg) { return Value(!arg); },
     },
     value);
@@ -90,7 +90,7 @@ return std::visit(
 inline Value operator++(const Value& value) {
 return std::visit(
     Visitor{
-        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },
         [&](double arg) { return Value(++arg); },
     },
     value);
@@ -99,7 +99,7 @@ return std::visit(
 inline Value operator--(const Value& value) {
 return std::visit(
     Visitor{
-        [&](const auto&) -> Value { throw std::runtime_error("No operator for this type."); },
+        [&](const auto&) -> Value { throw InternalException("Invalid operator use."); },
         [&](double arg) { return Value(--arg); },
     },
     value);

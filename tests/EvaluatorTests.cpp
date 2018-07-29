@@ -64,7 +64,7 @@ TEST_CASE("Plus Operator") {
     CHECK(ToString(p.Evaluate("foo", { 1.0, 1.0 })) == "2");
     CHECK(ToString(p.Evaluate("foo", { 2.5, -1.0 })) == "1.5");
     CHECK(ToString(p.Evaluate("foo", { "Hello"s, "World"s })) == "HelloWorld");
-    CHECK_THROWS_WITH(ToString(p.Evaluate("foo", { "Hello"s, 1.0 })), "No operator for this type.");
+    CHECK_THROWS_WITH(ToString(p.Evaluate("foo", { "Hello"s, 1.0 })), "An exception occured on line 2. Message: Invalid operator use.");
 }
 
 TEST_CASE("Logical And Operator") {
@@ -89,7 +89,7 @@ TEST_CASE("Function call") {
     Parser p("examples/evaluator/FunctionCall.ct");
     INFO(p.Tree());
     CHECK(ToString(p.Evaluate("foo", { 1.0 })) == "2");
-    CHECK_THROWS_WITH(p.Evaluate("foo", { "a" }), "No operator for this type.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { "a" }), "An exception occured on line 2. Message: Invalid operator use.");
 }
 
 TEST_CASE("Recursive call") {
@@ -110,8 +110,8 @@ TEST_CASE("Negation operator") {
     CHECK(ToString(p.Evaluate("foo", { true })) == "False");
     CHECK(ToString(p.Evaluate("foo", { false })) == "True");
     
-    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "No operator for this type.");
-    CHECK_THROWS_WITH(p.Evaluate("foo", { 1.0 }), "No operator for this type.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "An exception occured on line 2. Message: Invalid operator use.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { 1.0 }), "An exception occured on line 2. Message: Invalid operator use.");
 }
 
 TEST_CASE("Increment operator") {
@@ -124,8 +124,8 @@ TEST_CASE("Increment operator") {
     CHECK(ToString(p.Evaluate("foo", { 1.0 })) == "2");
     CHECK(ToString(p.Evaluate("foo", { -1.0 })) == "0");
     
-    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "No operator for this type.");
-    CHECK_THROWS_WITH(p.Evaluate("foo", { true }), "No operator for this type.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { "abc"s }), "An exception occured on line 2. Message: Invalid operator use.");
+    CHECK_THROWS_WITH(p.Evaluate("foo", { true }), "An exception occured on line 2. Message: Invalid operator use.");
 }
 
 TEST_CASE("While loop") {

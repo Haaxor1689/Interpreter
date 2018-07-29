@@ -110,6 +110,15 @@ public:
             ret += "    ";
         return ret;
     }
+    void MatchType(VarID symbol, VarID expectedType, const std::string& cause = "") {
+        const auto anyType = Symbols().GetSymbol("any").id;
+        if (Symbols().GetType(symbol) == anyType) {
+            Symbols().SetType(symbol, expectedType);
+        }
+        if (expectedType != anyType && Symbols().GetType(symbol) != expectedType) {
+            throw TypeMismatchException(Symbols().GetName(Symbols().GetType(symbol)), Symbols().GetName(expectedType), line, cause);
+        }
+    }
 };
 
 struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> {
@@ -160,17 +169,8 @@ struct VariableRef : public Node, public Rule<lIdentifier> {
     VarID ReturnType() const override;
 };
 
-struct TypeName : public Node, public Rule<lColon, lIdentifier> {
-    VarID typeName;
-
-    TypeName(Node* parent, const Token& token, const std::function<void()>& shift);
-    void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
-};
-
-struct VariableDef : public Node, public Rule<lVar, lIdentifier, TypeName> {
+struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
     VarID name;
-    std::unique_ptr<TypeName> type;
     std::unique_ptr<Expression> value;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
@@ -178,9 +178,8 @@ struct VariableDef : public Node, public Rule<lVar, lIdentifier, TypeName> {
     VarID ReturnType() const override;
 };
 
-struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose, TypeName> {
+struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
     std::list<VariableDef> arguments;
-    std::unique_ptr<TypeName> returnType;
 
     Arguments(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -263,7 +262,7 @@ struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
 };
 
 struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
-    std::unique_ptr<VariableDef> variable;
+    std::unique_ptr<VariableDef> controlVariable;
     std::unique_ptr<Range> range;
     std::unique_ptr<Block> block;
     SymbolTable symbols;

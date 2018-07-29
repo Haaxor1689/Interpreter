@@ -1,0 +1,7 @@
+func foo(var a) {
+	var ret = 0;
+	for var b in 2 ... a {
+		ret = + ret b;
+	}
+	return ret;
+}
