@@ -1,0 +1,8 @@
+func foo(var a: number, var b: number) {
+	var ret = 0;
+	while > a 0 {
+		a = - a 1;
+		ret = + ret b;
+	}
+	return ret;
+}

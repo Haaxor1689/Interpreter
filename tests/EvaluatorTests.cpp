@@ -128,4 +128,13 @@ TEST_CASE("Increment operator") {
     CHECK_THROWS_WITH(p.Evaluate("foo", { true }), "No operator for this type.");
 }
 
+TEST_CASE("While loop") {
+    Parser p("examples/evaluator/WhileLoop.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { 1.0, 5.0 })) == "5");
+    CHECK(ToString(p.Evaluate("foo", { -1.0, 12.0 })) == "0");
+    CHECK(ToString(p.Evaluate("foo", { 5.0, 5.0 })) == "25");
+}
+
 } // namespace EvaluatorTests
