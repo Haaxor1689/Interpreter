@@ -7,14 +7,6 @@
 using namespace std;
 using namespace Interpreter;
 
-namespace {
-std::string to_string(const Value& value) {
-    ostringstream oss;
-    oss << value;
-    return oss.str();
-}
-} // namespace
-
 namespace TicTacToeTests {
 
 TEST_CASE("Compiles correctly") {
@@ -23,10 +15,17 @@ TEST_CASE("Compiles correctly") {
 
 TEST_CASE("IsValidColumn") {
     Parser p("examples/TicTacToe.ct");
-    INFO(p.Tree());
-    CHECK(to_string(p.Evaluate("IsValidColumn", { "1" })) == "True");
-    CHECK(to_string(p.Evaluate("IsValidColumn", { "-1" })) == "False");
-    CHECK(to_string(p.Evaluate("IsValidColumn", { "3" })) == "False");
+    CHECK(ToString(p.Evaluate("IsValidColumn", std::list<Value>{ 1.0 })) == "True");
+    CHECK(ToString(p.Evaluate("IsValidColumn", std::list<Value>{ -1.0 })) == "False");
+    CHECK(ToString(p.Evaluate("IsValidColumn", std::list<Value>{ 3.0 })) == "False");
+}
+
+TEST_CASE("IsValidRow") {
+    Parser p("examples/TicTacToe.ct");
+    CHECK(ToString(p.Evaluate("IsValidRow", std::list<Value>{ "A"s })) == "True");
+    CHECK(ToString(p.Evaluate("IsValidRow", std::list<Value>{ "C"s })) == "True");
+    CHECK(ToString(p.Evaluate("IsValidRow", std::list<Value>{ "D"s })) == "False");
+    CHECK(ToString(p.Evaluate("IsValidRow", std::list<Value>{ "b"s })) == "False");
 }
 
 } // namespace TicTacToeTests

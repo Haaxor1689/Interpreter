@@ -13,6 +13,8 @@ BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::fu
 
     lhs = std::make_unique<Expression>(this, token, shift);
     rhs = std::make_unique<Expression>(this, token, shift);
+
+    returnType = token.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : lhs->ReturnType();
 }
 
 void BinaryOperation::Print(std::ostream& os, size_t depth) const {
@@ -28,7 +30,7 @@ void BinaryOperation::Print(std::ostream& os, size_t depth) const {
 }
 
 VarID BinaryOperation::ReturnType() const {
-    return lhs->ReturnType();
+    return returnType;
 }
 
 VariableAssign::VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift)

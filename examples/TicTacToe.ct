@@ -1,12 +1,12 @@
 func IsValidColumn(var column: number): bool {
-	return || > column 2 < column 0;
+	return && <= column 2 >= column 0;
 }
 
 func IsValidRow(var row: string): bool {
 	return || == row "A" || == row "B" == row "C";
 }
 
-func Play(): void {
+func Play(): string {
 	var shouldEnd = false;
 
 	var _00 = "";
@@ -15,24 +15,24 @@ func Play(): void {
 	var _10 = "";
 	var _11 = "";
 	var _12 = "";
+	var _20 = "";
 	var _21 = "";
 	var _22 = "";
-	var _23 = "";
 
 	var currentPlayer = "X";
 
-	while (!shouldEnd) {
+	while shouldEnd == false {
 		WriteLine(+ "Player " + currentPlayer "'s turn");
 
 		WriteLine("Write column number:");
 		var column = ReadNumber();
-		if (!IsValidColumn(column)) {
+		if == IsValidColumn(column) false {
 			WriteLine(+ "Invalid column " column);
 		}
 
 		WriteLine("Write row number:");
 		var row = ReadText();
-		if (!IsValidRow(row)) {
+		if == IsValidRow(row) false {
 			WriteLine(+ "Invalid row " row);
 		}
 	}
