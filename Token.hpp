@@ -57,62 +57,66 @@ struct Token {
         return TypeString(type);
     }
 
+    bool IsLogicalOperator() const {
+        return text == "==" || text == "!=" || text == ">" || text == ">=" || text == "<" || text == "<=" || text == "&&" || text == "||";
+    }
+
     static std::string TypeString(Type type) {
         switch (type) {
-        case Token::Type::Identifier:
+        case Identifier:
             return "Identifier";
-        case Token::Type::String:
+        case String:
             return "String";
-        case Token::Type::Number:
+        case Number:
             return "Number";
-        case Token::Type::UnaryOperator:
+        case UnaryOperator:
             return "Unary Operator";
-        case Token::Type::BinaryOperator:
+        case BinaryOperator:
             return "Binary Operator";
-        case Token::Type::ParenOpen:
-        case Token::Type::ParenClose:
-        case Token::Type::SquareOpen:
-        case Token::Type::SquareClose:
-        case Token::Type::CurlyOpen:
-        case Token::Type::CurlyClose:
+        case ParenOpen:
+        case ParenClose:
+        case SquareOpen:
+        case SquareClose:
+        case CurlyOpen:
+        case CurlyClose:
             return "Bracket";
-        case Token::Type::If:
+        case If:
             return "If";
-        case Token::Type::Elseif:
+        case Elseif:
             return "Elseif";
-        case Token::Type::Else:
+        case Else:
             return "Else";
-        case Token::Type::For:
+        case For:
             return "For";
-        case Token::Type::Do:
+        case Do:
             return "Do";
-        case Token::Type::While:
+        case While:
             return "While";
-        case Token::Type::Return:
+        case Return:
             return "Return";
-        case Token::Type::Func:
+        case Func:
             return "Func";
-        case Token::Type::In:
+        case In:
             return "In";
-        case Token::Type::As:
+        case As:
             return "As";
-        case Token::Type::Null:
+        case Null:
             return "Null";
-        case Token::Type::Var:
+        case Var:
             return "Var";
-        case Token::Type::True:
+        case True:
             return "True";
-        case Token::Type::False:
+        case False:
             return "False";
-        case Token::Type::Colon:
+        case Colon:
             return "Colon";
-        case Token::Type::Semicolon:
+        case Semicolon:
             return "Semicolon";
-        case Token::Type::Comma:
+        case Comma:
             return "Comma";
-        case Token::Type::EoF:
+        case EoF:
             return "EoF";
-        case Token::Type::Invalid:
+        case Invalid:
             return "Invalid Token";
         default:
             return "Keyword";

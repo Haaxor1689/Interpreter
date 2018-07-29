@@ -37,6 +37,19 @@ inline std::ostream& operator<<(std::ostream& os, const Value& val) {
     return os;
 }
 
+// Output operator for Value type
+inline std::string ToString(const Value& val) {
+    using namespace std::string_literals;
+    return std::visit(
+        Visitor{
+            [&](const auto&) { return "Void"s; },
+            [&](bool arg) { return arg ? "True"s : "False"s; },
+            [&](double arg) { return std::to_string(arg); },
+            [&](const std::string& arg) { return arg; },
+        },
+        val);
+}
+
 // Literals
 using lEoF = TokenType<Token::Type::EoF>;
 using lFunc = TokenType<Token::Type::Func>;
@@ -98,6 +111,7 @@ struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, E
     std::unique_ptr<Expression> lhs;
     std::unique_ptr<Expression> rhs;
     std::string operation;
+    VarID returnType;
 
     BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
