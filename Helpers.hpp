@@ -3,6 +3,7 @@
 #include <variant>
 #include <string>
 #include <sstream>
+#include <map>
 
 namespace Interpreter {
     
@@ -12,8 +13,19 @@ struct Visitor : Ts... { using Ts::operator()...; };
 template <class... Ts>
 Visitor(Ts...)->Visitor<Ts...>;
 
+struct ObjectType;
 using VarID = unsigned;
-using Value = std::variant<std::monostate, bool, double, std::string>;
+using Value = std::variant<std::monostate, bool, double, std::string, ObjectType>;
+
+struct ObjectType {
+    friend bool operator==(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator!=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator>=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator<=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator>(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator<(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    std::map<std::string, Value> values;
+};
 
 using fVoidValuePtr = void(*)(const Value&);
 using fStringPtr = std::string(*)();
@@ -28,6 +40,13 @@ inline std::ostream& operator<<(std::ostream& os, const Value& val) {
             [&](bool arg) { os << (arg ? "True" : "False"); },
             [&](double arg) { os << arg; },
             [&](const std::string& arg) { os << arg; },
+            [&](const ObjectType& arg) {
+                os << "{ ";
+                for (const auto& value : arg.values) {
+                    os << value.first << ": " << value.second << ", ";
+                }
+                os << "}";
+            },
         },
         val);
     return os;
@@ -46,6 +65,11 @@ inline std::string ToString(const Value& val) {
                 return oss.str();
             },
             [&](const std::string& arg) { return arg; },
+            [&](const ObjectType& arg) {
+                std::ostringstream oss;
+                oss << arg;
+                return oss.str();
+            },
         },
         val);
 }

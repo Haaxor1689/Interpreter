@@ -772,6 +772,41 @@ VarID FunctionDef::ReturnType() const {
     return Symbols().GetType(name);
 }
 
+Object::Object(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line), symbols(&parent->Symbols()) {
+    lObject::RequireToken(token);
+    shift();
+
+    lIdentifier::RequireToken(token);
+    name = parent->Symbols().AddSymbol(token.text);
+    shift();
+
+    lCurlyOpen::RequireToken(token);
+    shift();
+
+    while (VariableDef::MatchToken(token)) {
+        attributes.emplace_back(this, token, shift);
+
+        lSemicolon::RequireToken(token);
+        shift();
+    }
+
+    lCurlyClose::RequireToken(token);
+    shift();
+}
+
+void Object::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "Object: {\n";
+    os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
+    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth + 1) << "Attributes: {\n";
+    for (const auto& attribute : attributes) {
+        attribute.Print(os, depth + 2);
+    }
+    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth) << "}\n";
+}
+
 Global::Global(const Token& token, const std::function<void()>& shift)
     : Node(nullptr, 0), symbols(nullptr) {
     // Add predefined symbols and functions
@@ -781,21 +816,34 @@ Global::Global(const Token& token, const std::function<void()>& shift)
     symbols.AddSymbol("string");
     symbols.AddSymbol("number");
     
-    functions.emplace_back(this, "func Write(var message): void", &Write);
-    functions.emplace_back(this, "func WriteLine(var message): void", &WriteLine);
-    functions.emplace_back(this, "func ReadNumber(): number", &ReadNumber);
-    functions.emplace_back(this, "func ReadText(): string", &ReadText);
+    definitions.emplace_back(std::in_place_type<FunctionDef>, this, "func Write(var message): void", &Write);
+    definitions.emplace_back(std::in_place_type<FunctionDef>, this, "func WriteLine(var message): void", &WriteLine);
+    definitions.emplace_back(std::in_place_type<FunctionDef>, this, "func ReadNumber(): number", &ReadNumber);
+    definitions.emplace_back(std::in_place_type<FunctionDef>, this, "func ReadText(): string", &ReadText);
 
     while (!lEoF::MatchToken(token)) {
-        functions.emplace_back(this, token, shift);
+        if (FunctionDef::MatchToken(token)) {
+            definitions.emplace_back(std::in_place_type<FunctionDef>, this, token, shift);
+        } else if (Object::MatchToken(token)) {
+            definitions.emplace_back(std::in_place_type<Object>, this, token, shift);
+        } else {
+            throw ParseException(token, RuleGroup<FunctionDef, Object>::ExpectedToken());
+        }
     }
 }
 
 void Global::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Global: {\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    for (const auto& func : functions)
-        func.Print(os, depth + 1);
+    for (const auto& definition : definitions)
+        std::visit(
+            Visitor {
+                [&, depth](const auto&) { os << Indent(depth + 1) << "Unknown statement\n"; },
+                [&, depth](const FunctionDef& arg) { arg.Print(os, depth + 1); },
+                [&, depth](const Object& arg) { arg.Print(os, depth + 1); },
+            },
+            definition
+        );
     os << Indent(depth) << "}\n";
 }
 

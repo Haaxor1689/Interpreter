@@ -289,7 +289,7 @@ TEST_CASE("Operators parser") {
 
 TEST_CASE("Wrong parser files") {
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongGlobal.ct"),
-        "Failed to parse [Identifier 'foo' on line 2]. Expected Func.");
+        "Failed to parse [Identifier 'foo' on line 2]. Expected one of following { Func, Object, }.");
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncArg.ct"), "Failed to parse [Identifier 'a' on line 2]. Expected Var.");
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncComma.ct"), "Failed to parse [Bracket ')' on line 2]. Expected Var.");
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncBlock.ct"),
@@ -361,6 +361,37 @@ TEST_CASE("Range parser") {
         "                }\n"
         "            }\n"
         + postfix);
+}
+
+TEST_CASE("Object parser") {
+    Parser p("examples/parser/ParserObject.ct");
+    ostringstream oss;
+    oss << p.Tree();
+    CHECK(oss.str() == 
+        "Global: {\n"
+        "    Symbols: { 12:Foo, 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 5:number, 4:string, 2:void, }\n"
+        "    Object: {\n"
+        "        Name: Foo\n"
+        "        Symbols: { 13:a, 14:b, 15:c, }\n"
+        "        Attributes: {\n"
+        "            Definition: {\n"
+        "                Variable: a\n"
+        "                Type: any\n"
+        "            }\n"
+        "            Definition: {\n"
+        "                Variable: b\n"
+        "                Type: number\n"
+        "                Value: {\n"
+        "                    Number: 10\n"
+        "                }\n"
+        "            }\n"
+        "            Definition: {\n"
+        "                Variable: c\n"
+        "                Type: string\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}\n");
 }
 
 } // namespace ParserTests

@@ -35,6 +35,7 @@ struct Token {
         Colon,
         Semicolon,
         Comma,
+        Object,
         EoF,
         Invalid
     };
@@ -121,6 +122,8 @@ struct Token {
             return "Semicolon";
         case Comma:
             return "Comma";
+        case Object:
+            return "Object";
         case EoF:
             return "EoF";
         case Invalid:

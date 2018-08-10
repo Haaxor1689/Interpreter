@@ -1,13 +1,14 @@
 #pragma once
 
-#include <variant>
-#include <memory>
+#include <algorithm>
 #include <functional>
 #include <list>
+#include <memory>
+#include <variant>
 
+#include "Helpers.hpp"
 #include "Rule.hpp"
 #include "SymbolTable.hpp"
-#include "Helpers.hpp"
 
 namespace Interpreter {
 
@@ -38,6 +39,7 @@ using lFalse = TokenType<Token::Type::False>;
 using lUnaryOperator = TokenType<Token::Type::UnaryOperator>;
 using lBinaryOperator = TokenType<Token::Type::BinaryOperator>;
 using lRangeOperator = TokenType<Token::Type::RangeOperator>;
+using lObject = TokenType<Token::Type::Object>;
 
 struct Block;
 struct Expression;
@@ -281,8 +283,20 @@ struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Blo
     VarID ReturnType() const override;
 };
 
-struct Global : public Node, public Rule<List<FunctionDef>, lEoF> {
-    std::list<FunctionDef> functions;
+struct Object : public Node, public Rule<lObject, lIdentifier, lCurlyOpen, List<VariableDef>, lCurlyClose> {
+    VarID name;
+    std::list<VariableDef> attributes;
+    SymbolTable symbols;
+
+    Object(Node* parent, const Token& token, const std::function<void()>& shift);
+    SymbolTable& Symbols() override { return symbols; }
+    const SymbolTable& Symbols() const override { return symbols; }
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override { return 0; }
+};
+
+struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, Object>>, lEoF> {
+    std::list<std::variant<FunctionDef, Object>> definitions;
     SymbolTable symbols;
 
     Global(const Token& token, const std::function<void()>& shift);
@@ -296,13 +310,20 @@ struct Global : public Node, public Rule<List<FunctionDef>, lEoF> {
     }
 
     const FunctionDef& GetFunction(VarID funcId) const {
-        auto it = std::find_if(functions.begin(), functions.end(), [funcId](const FunctionDef& val) {
-            return val.name == funcId;
+        auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
+            return std::visit(
+                Visitor{
+                    [&](const auto&) { return false; },
+                    [&](const FunctionDef& arg) { return arg.name == funcId; },
+                },
+                val
+            );
         });
-        if (it == functions.end()) {
+        if (it == definitions.end()) {
             throw UndefinedIdentifierNameException(funcId);
         }
-        return *it;
+
+        return std::get<FunctionDef>(*it);
     }
 };
 
