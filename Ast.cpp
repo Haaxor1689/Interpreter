@@ -181,6 +181,52 @@ VarID VariableDef::ReturnType() const {
     return Symbols().GetType(name);
 }
 
+ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line) {
+    lNew::RequireToken(token);
+    shift();
+    
+    lIdentifier::RequireToken(token);
+    type = Symbols().GetSymbol(token.text).id;
+    shift();
+
+    lCurlyOpen::RequireToken(token);
+    shift();
+
+    while (!lCurlyClose::MatchToken(token)) {
+        lIdentifier::RequireToken(token);
+        auto variable = token.text;
+        if (value.find(variable) != value.end()) {
+            throw IdentifierRedefinitionException(variable);
+        }
+        shift();
+
+        lBinaryOperator::RequireToken(token);
+        if (token.text != "=") {
+            throw ParseException(token, { Token::Type::BinaryOperator });
+        }
+        shift();
+
+        value.try_emplace(variable, this, token, shift);
+
+        lComma::RequireToken(token);
+        shift();
+    }
+
+    lCurlyClose::RequireToken(token);
+    shift();
+}
+
+void ObjectInitializer::Print(std::ostream& os, size_t depth) const {
+    os << Indent(depth) << "ObjectInitializer: {\n";
+    for (const auto& pair : value) {
+        os << Indent(depth + 1) << pair.first << ": {\n";
+        pair.second.Print(os, depth + 2);
+        os << Indent(depth + 1) << "}\n";
+    }
+    os << Indent(depth) << "}\n";
+}
+
 Arguments::Arguments(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     lParenOpen::RequireToken(token);
@@ -310,6 +356,8 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
         shift();
     } else if (VariableDef::MatchToken(token)) {
         expression.emplace<VariableDef>(this, token, shift);
+    } else if (ObjectInitializer::MatchToken(token)) {
+        expression.emplace<ObjectInitializer>(this, token, shift);
     } else {
         throw ParseException(token, ExpectedToken());
     }
@@ -328,6 +376,7 @@ void Expression::Print(std::ostream& os, size_t depth) const {
             [&, depth](double arg) { os << Indent(depth) << "Number: " << arg << "\n"; },
             [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
+            [&, depth](const ObjectInitializer& arg) { arg.Print(os, depth); },
         },
         expression
     );
@@ -346,6 +395,7 @@ VarID Expression::ReturnType() const {
             [&](double) { return Symbols().GetSymbol("number").id; },
             [&](const std::string&) { return Symbols().GetSymbol("string").id; },
             [&](const VariableDef& arg) { return arg.ReturnType(); },
+            [&](const ObjectInitializer& arg) { return arg.ReturnType(); },
         },
         expression
     );

@@ -1,0 +1,13 @@
+object Tst {
+	var a: string;
+	var b: number;
+	var c;
+}
+
+func Main() {
+	var obj = new Tst {
+		a = "a",
+		b = 1,
+		c = true,
+	};
+}

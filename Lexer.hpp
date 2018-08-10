@@ -45,7 +45,7 @@ class Lexer {
         std::make_pair("in", Token::Type::In), std::make_pair("as", Token::Type::As),
         std::make_pair("null", Token::Type::Null), std::make_pair("var", Token::Type::Var),
         std::make_pair("true", Token::Type::True), std::make_pair("false", Token::Type::False),
-        std::make_pair("object", Token::Type::Object),
+        std::make_pair("object", Token::Type::Object), std::make_pair("new", Token::Type::New),
     };
 
 public:

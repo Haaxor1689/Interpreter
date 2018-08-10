@@ -40,6 +40,7 @@ using lUnaryOperator = TokenType<Token::Type::UnaryOperator>;
 using lBinaryOperator = TokenType<Token::Type::BinaryOperator>;
 using lRangeOperator = TokenType<Token::Type::RangeOperator>;
 using lObject = TokenType<Token::Type::Object>;
+using lNew = TokenType<Token::Type::New>;
 
 struct Block;
 struct Expression;
@@ -137,6 +138,15 @@ struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
     VarID ReturnType() const override;
 };
 
+struct ObjectInitializer : public Node, public Rule<lNew, lIdentifier, lCurlyOpen, List<VariableAssign>, lCurlyClose> {
+    VarID type;
+    std::map<std::string, Expression> value;
+
+    ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override { return type; }
+};
+
 struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
     std::list<VariableDef> arguments;
 
@@ -154,8 +164,8 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
     VarID ReturnType() const override;
 };
 
-struct Expression : public Node, public RuleGroup<BinaryOperation, VariableRef, lTrue, lFalse, lNumber, lString, VariableDef> {
-    std::variant<std::monostate, UnaryOperation, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef> expression;
+struct Expression : public Node, public RuleGroup<BinaryOperation, VariableRef, lTrue, lFalse, lNumber, lString, VariableDef, ObjectInitializer> {
+    std::variant<std::monostate, UnaryOperation, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef, ObjectInitializer> expression;
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
