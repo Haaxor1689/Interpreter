@@ -44,6 +44,7 @@ using lNew = TokenType<Token::Type::New>;
 
 struct Block;
 struct Expression;
+struct Global;
 
 struct Node {
 protected:
@@ -79,6 +80,16 @@ public:
             throw TypeMismatchException(Symbols().GetName(Symbols().GetType(symbol)), Symbols().GetName(expectedType), line, cause);
         }
     }
+    void MatchTypeConst(VarID symbol, VarID expectedType, const std::string& cause = "") const {
+        const auto anyType = Symbols().GetSymbol("any").id;
+        const auto symbolType = Symbols().GetType(symbol);
+        if (expectedType != anyType && symbolType != anyType && symbolType != expectedType) {
+            throw TypeMismatchException(Symbols().GetName(Symbols().GetType(symbol)), Symbols().GetName(expectedType), line, cause);
+        }
+    }
+    
+    Global& GetGlobal();
+    const Global& GetGlobal() const;
 };
 
 struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> {
@@ -140,7 +151,7 @@ struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
 
 struct ObjectInitializer : public Node, public Rule<lNew, lIdentifier, lCurlyOpen, List<VariableAssign>, lCurlyClose> {
     VarID type;
-    std::map<std::string, Expression> value;
+    std::map<VarID, Expression> value;
 
     ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -293,20 +304,20 @@ struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Blo
     VarID ReturnType() const override;
 };
 
-struct Object : public Node, public Rule<lObject, lIdentifier, lCurlyOpen, List<VariableDef>, lCurlyClose> {
+struct ObjectDef : public Node, public Rule<lObject, lIdentifier, lCurlyOpen, List<VariableDef>, lCurlyClose> {
     VarID name;
     std::list<VariableDef> attributes;
     SymbolTable symbols;
 
-    Object(Node* parent, const Token& token, const std::function<void()>& shift);
+    ObjectDef(Node* parent, const Token& token, const std::function<void()>& shift);
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override { return 0; }
 };
 
-struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, Object>>, lEoF> {
-    std::list<std::variant<FunctionDef, Object>> definitions;
+struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>, lEoF> {
+    std::list<std::variant<FunctionDef, ObjectDef>> definitions;
     SymbolTable symbols;
 
     Global(const Token& token, const std::function<void()>& shift);
@@ -334,6 +345,27 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, Object>>, l
         }
 
         return std::get<FunctionDef>(*it);
+    }
+
+    const ObjectDef& GetObject(const std::string& name) const {
+        return GetObject(symbols.GetSymbol(name).id);
+    }
+
+    const ObjectDef& GetObject(VarID objId) const {
+        auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
+            return std::visit(
+                Visitor{
+                    [&](const auto&) { return false; },
+                    [&](const ObjectDef& arg) { return arg.name == objId; },
+                },
+                val
+            );
+        });
+        if (it == definitions.end()) {
+            throw UndefinedIdentifierNameException(objId);
+        }
+
+        return std::get<ObjectDef>(*it);
     }
 };
 

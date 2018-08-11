@@ -296,7 +296,8 @@ TEST_CASE("Wrong parser files") {
         "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
         "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, "
-        "Binary Operator, Identifier, True, False, Number, String, Var, }.");
+        "Binary Operator, Identifier, True, False, Number, String, Var, New, }."
+    );
 }
 
 TEST_CASE("Function and variables types") {
@@ -364,14 +365,14 @@ TEST_CASE("Range parser") {
 }
 
 TEST_CASE("Object parser") {
-    Parser p("examples/parser/ParserObject.ct");
+    Parser p("examples/parser/ParserObjectDef.ct");
     ostringstream oss;
     oss << p.Tree();
     CHECK(oss.str() == 
         "Global: {\n"
-        "    Symbols: { 12:Foo, 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 5:number, 4:string, 2:void, }\n"
+        "    Symbols: { 12:Goo, 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 5:number, 4:string, 2:void, }\n"
         "    Object: {\n"
-        "        Name: Foo\n"
+        "        Name: Goo\n"
         "        Symbols: { 13:a, 14:b, 15:c, }\n"
         "        Attributes: {\n"
         "            Definition: {\n"
@@ -388,6 +389,63 @@ TEST_CASE("Object parser") {
         "            Definition: {\n"
         "                Variable: c\n"
         "                Type: string\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}\n");
+}
+
+TEST_CASE("Object init parser") {
+    Parser p("examples/parser/ParserObjectInit.ct");
+    ostringstream oss;
+    oss << p.Tree();
+    CHECK(oss.str() == 
+        "Global: {\n"
+        "    Symbols: { 16:Foo, 12:Goo, 10:ReadNumber, 11:ReadText, 6:Write, 8:WriteLine, 1:any, 3:bool, 5:number, 4:string, 2:void, }\n"
+        "    Object: {\n"
+        "        Name: Goo\n"
+        "        Symbols: { 13:a, 14:b, 15:c, }\n"
+        "        Attributes: {\n"
+        "            Definition: {\n"
+        "                Variable: a\n"
+        "                Type: any\n"
+        "            }\n"
+        "            Definition: {\n"
+        "                Variable: b\n"
+        "                Type: number\n"
+        "                Value: {\n"
+        "                    Number: 10\n"
+        "                }\n"
+        "            }\n"
+        "            Definition: {\n"
+        "                Variable: c\n"
+        "                Type: string\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "    FunctionDef: {\n"
+        "        Name: Foo\n"
+        "        Symbols: { 17:obj, }\n"
+        "        Arguments: {\n"
+        "        }\n"
+        "        Returns: {\n"
+        "            Type: void\n"
+        "        }\n"
+        "        Block: {\n"
+        "            Definition: {\n"
+        "                Variable: obj\n"
+        "                Type: Goo\n"
+        "                Value: {\n"
+        "                    ObjectInit: {\n"
+        "                        Type: Goo\n"
+        "                        a: {\n"
+        "                            String: \"a\"\n"
+        "                        }\n"
+        "                        c: {\n"
+        "                            String: \"c\"\n"
+        "                        }\n"
+        "                    }\n"
+        "                }\n"
         "            }\n"
         "        }\n"
         "    }\n"

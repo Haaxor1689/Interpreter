@@ -1,0 +1,14 @@
+object Goo {
+	var a;
+	var b: number;
+	var c = true;
+	var d = 43;
+}
+
+func Foo() {
+	var a: Goo = new Goo {
+		a = 5,
+		b = 6,
+		c = false,
+	};
+}

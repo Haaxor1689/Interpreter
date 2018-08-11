@@ -37,4 +37,14 @@ TEST_CASE("Function arguments") {
         "Type mismatch error on line 5. Expected \"string\" got \"number\".");
 }
 
+TEST_CASE("Object typecheck") {
+    CHECK_NOTHROW(TryCreateParser("typecheck/CorrectObject.ct"));
+    CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectDef.ct"),
+        "Type mismatch error on line 2. Expected \"number\" got \"string\".");
+    CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectInit.ct"),
+        "Type mismatch error on line 7 caused by missing b: any. Expected \"Goo\" got \"Object\".");
+    CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectInit2.ct"),
+        "Type mismatch error on line 1. Expected \"number\" got \"string\".");
+}
+
 } // namespace TypecheckTests

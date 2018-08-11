@@ -1,4 +1,4 @@
-object Foo {
+object Goo {
 	var a;
 	var b = 10;
 	var c: string;

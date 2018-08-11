@@ -1,0 +1,12 @@
+object Goo {
+	var a;
+	var b = 10;
+	var c: string;
+}
+
+func Foo() {
+	var obj: Goo = new Goo {
+		c = "c",
+		a = "a",
+	};
+}

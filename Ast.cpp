@@ -5,6 +5,22 @@
 
 namespace Interpreter {
 
+Global& Node::GetGlobal() {
+    Node* actual = this;
+    while (actual->parent) {
+        actual = actual->parent;
+    }
+    return *dynamic_cast<Global*>(actual);
+}
+
+const Global& Node::GetGlobal() const {
+    const Node* actual = this;
+    while (actual->parent) {
+        actual = actual->parent;
+    }
+    return *dynamic_cast<const Global*>(actual);
+}
+
 Range::Range(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     from = std::make_unique<Expression>(this, token, shift);
@@ -193,11 +209,12 @@ ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std
     lCurlyOpen::RequireToken(token);
     shift();
 
+    const ObjectDef& objectDef = GetGlobal().GetObject(type);
     while (!lCurlyClose::MatchToken(token)) {
         lIdentifier::RequireToken(token);
-        auto variable = token.text;
+        VarID variable = objectDef.Symbols().GetSymbol(token.text).id;
         if (value.find(variable) != value.end()) {
-            throw IdentifierRedefinitionException(variable);
+            throw IdentifierRedefinitionException(token.text);
         }
         shift();
 
@@ -215,12 +232,30 @@ ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std
 
     lCurlyClose::RequireToken(token);
     shift();
+
+    for (const auto& variable : objectDef.attributes) {
+        auto expressionIt = value.find(variable.name);
+        if (expressionIt == value.end()) {
+            if (!variable.value) {
+                throw TypeMismatchException(
+                    Symbols().GetName(type),
+                    "Object",
+                    line,
+                    "missing " + objectDef.Symbols().GetName(variable.name) + ": " + Symbols().GetName(objectDef.Symbols().GetType(variable.name))
+                );  
+            }
+        } else {
+            objectDef.MatchTypeConst(variable.name, expressionIt->second.ReturnType());
+        }
+    }
 }
 
 void ObjectInitializer::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "ObjectInitializer: {\n";
+    os << Indent(depth) << "ObjectInit: {\n";
+    os << Indent(depth + 1) << "Type: " << Symbols().GetName(type) << "\n"; 
+    const ObjectDef& objectDef = GetGlobal().GetObject(type);
     for (const auto& pair : value) {
-        os << Indent(depth + 1) << pair.first << ": {\n";
+        os << Indent(depth + 1) << objectDef.Symbols().GetName(pair.first) << ": {\n";
         pair.second.Print(os, depth + 2);
         os << Indent(depth + 1) << "}\n";
     }
@@ -286,7 +321,7 @@ FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function
         func = nullptr;
         node = node->parent;
     }
-    const FunctionDef& functionDef = func == nullptr ? static_cast<Global*>(node)->GetFunction(name) : *func;
+    const FunctionDef& functionDef = func == nullptr ? dynamic_cast<Global*>(node)->GetFunction(name) : *func;
     if (arguments.size() != functionDef.arguments->arguments.size()) {
             throw TypeMismatchException(std::to_string(arguments.size()) + " arg(s)", std::to_string(functionDef.arguments->arguments.size()) + " arg(s)", line);
     }
@@ -822,7 +857,7 @@ VarID FunctionDef::ReturnType() const {
     return Symbols().GetType(name);
 }
 
-Object::Object(Node* parent, const Token& token, const std::function<void()>& shift)
+ObjectDef::ObjectDef(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), symbols(&parent->Symbols()) {
     lObject::RequireToken(token);
     shift();
@@ -845,7 +880,7 @@ Object::Object(Node* parent, const Token& token, const std::function<void()>& sh
     shift();
 }
 
-void Object::Print(std::ostream& os, size_t depth) const {
+void ObjectDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Object: {\n";
     os << Indent(depth + 1) << "Name: " << Symbols().GetName(name) << "\n";
     os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
@@ -874,10 +909,10 @@ Global::Global(const Token& token, const std::function<void()>& shift)
     while (!lEoF::MatchToken(token)) {
         if (FunctionDef::MatchToken(token)) {
             definitions.emplace_back(std::in_place_type<FunctionDef>, this, token, shift);
-        } else if (Object::MatchToken(token)) {
-            definitions.emplace_back(std::in_place_type<Object>, this, token, shift);
+        } else if (ObjectDef::MatchToken(token)) {
+            definitions.emplace_back(std::in_place_type<ObjectDef>, this, token, shift);
         } else {
-            throw ParseException(token, RuleGroup<FunctionDef, Object>::ExpectedToken());
+            throw ParseException(token, RuleGroup<FunctionDef, ObjectDef>::ExpectedToken());
         }
     }
 }
@@ -890,7 +925,7 @@ void Global::Print(std::ostream& os, size_t depth) const {
             Visitor {
                 [&, depth](const auto&) { os << Indent(depth + 1) << "Unknown statement\n"; },
                 [&, depth](const FunctionDef& arg) { arg.Print(os, depth + 1); },
-                [&, depth](const Object& arg) { arg.Print(os, depth + 1); },
+                [&, depth](const ObjectDef& arg) { arg.Print(os, depth + 1); },
             },
             definition
         );

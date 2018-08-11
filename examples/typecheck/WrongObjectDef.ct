@@ -1,0 +1,3 @@
+object Goo {
+	var a: number = "str";
+}
