@@ -143,6 +143,14 @@ VariableRef::VariableRef(Node* parent, const Token& token, const std::function<v
     lIdentifier::RequireToken(token);
     name = Symbols().GetSymbol(token.text).id;
     shift();
+
+    if (lDot::MatchToken(token)) {
+        shift();
+
+        lIdentifier::RequireToken(token);
+        attribute = GetGlobal().GetObject(Symbols().GetType(name)).Symbols().GetSymbol(token.text).id;
+        shift();
+    }
 }
 
 void VariableRef::Print(std::ostream& os, size_t depth) const {
@@ -150,6 +158,9 @@ void VariableRef::Print(std::ostream& os, size_t depth) const {
 }
 
 VarID VariableRef::ReturnType() const {
+    if (attribute != 0) {
+        return GetGlobal().GetObject(Symbols().GetType(name)).Symbols().GetType(attribute);
+    }
     return Symbols().GetType(name);
 }
 

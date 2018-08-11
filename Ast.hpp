@@ -41,6 +41,7 @@ using lBinaryOperator = TokenType<Token::Type::BinaryOperator>;
 using lRangeOperator = TokenType<Token::Type::RangeOperator>;
 using lObject = TokenType<Token::Type::Object>;
 using lNew = TokenType<Token::Type::New>;
+using lDot = TokenType<Token::Type::Dot>;
 
 struct Block;
 struct Expression;
@@ -134,6 +135,7 @@ struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
 
 struct VariableRef : public Node, public Rule<lIdentifier> {
     VarID name;
+    VarID attribute = 0;
 
     VariableRef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;

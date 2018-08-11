@@ -17,25 +17,24 @@ class Lexer {
 
     const std::map<std::string, Token::Type> operators = {
         std::make_pair("+", Token::Type::BinaryOperator), std::make_pair("-", Token::Type::BinaryOperator),
-        std::make_pair("*", Token::Type::BinaryOperator), std::make_pair("/", Token::Type::BinaryOperator),
-        std::make_pair("=", Token::Type::BinaryOperator), std::make_pair("<", Token::Type::BinaryOperator),
-        std::make_pair(">", Token::Type::BinaryOperator), std::make_pair("!", Token::Type::UnaryOperator),
-        std::make_pair("?", Token::Type::UnaryOperator), std::make_pair(".", Token::Type::BinaryOperator),
-        std::make_pair("|", Token::Type::BinaryOperator), std::make_pair("&", Token::Type::BinaryOperator),
         std::make_pair("++", Token::Type::UnaryOperator), std::make_pair("--", Token::Type::UnaryOperator),
         std::make_pair("+=", Token::Type::BinaryOperator), std::make_pair("-=", Token::Type::BinaryOperator),
-        std::make_pair("->", Token::Type::BinaryOperator), std::make_pair("||", Token::Type::BinaryOperator),
-        std::make_pair("&&", Token::Type::BinaryOperator), std::make_pair("==", Token::Type::BinaryOperator),
-        std::make_pair("!=", Token::Type::BinaryOperator), std::make_pair("<=", Token::Type::BinaryOperator),
-        std::make_pair(">=", Token::Type::BinaryOperator), std::make_pair("..", Token::Type::BinaryOperator),
-        std::make_pair("...", Token::Type::RangeOperator), std::make_pair("..<", Token::Type::RangeOperator)
+        std::make_pair("*", Token::Type::BinaryOperator), std::make_pair("/", Token::Type::BinaryOperator),
+        std::make_pair("<", Token::Type::BinaryOperator), std::make_pair("<=", Token::Type::BinaryOperator),
+        std::make_pair(">", Token::Type::BinaryOperator), std::make_pair(">=", Token::Type::BinaryOperator),
+        std::make_pair("|", Token::Type::BinaryOperator), std::make_pair("&", Token::Type::BinaryOperator),
+        std::make_pair("||", Token::Type::BinaryOperator), std::make_pair("&&", Token::Type::BinaryOperator),
+        std::make_pair("==", Token::Type::BinaryOperator), std::make_pair("!=", Token::Type::BinaryOperator),
+        std::make_pair("...", Token::Type::RangeOperator), std::make_pair("..<", Token::Type::RangeOperator),
+        std::make_pair("=", Token::Type::BinaryOperator), std::make_pair(".", Token::Type::Dot),
+        std::make_pair("!", Token::Type::UnaryOperator), std::make_pair("?", Token::Type::UnaryOperator),
     };
     const std::map<char, Token::Type> special = {
         std::make_pair('(', Token::Type::ParenOpen), std::make_pair(')', Token::Type::ParenClose),
         std::make_pair('[', Token::Type::SquareOpen), std::make_pair(']', Token::Type::SquareClose),
         std::make_pair('{', Token::Type::CurlyOpen), std::make_pair('}', Token::Type::CurlyClose),
         std::make_pair(':', Token::Type::Colon), std::make_pair(';', Token::Type::Semicolon),
-        std::make_pair(',', Token::Type::Comma)
+        std::make_pair(',', Token::Type::Comma),
     };
     const std::map<std::string, Token::Type> keywords = {
         std::make_pair("if", Token::Type::If), std::make_pair("elseif", Token::Type::Elseif),

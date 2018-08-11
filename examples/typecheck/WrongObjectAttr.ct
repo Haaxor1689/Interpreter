@@ -1,0 +1,8 @@
+object Goo {
+	var a: string;
+}
+
+func Foo(): number {
+	var a = new Goo { a = "a", };
+	return a.a;
+}

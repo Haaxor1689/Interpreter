@@ -5,10 +5,11 @@ object Goo {
 	var d = 43;
 }
 
-func Foo() {
+func Foo(): number {
 	var a: Goo = new Goo {
 		a = 5,
 		b = 6,
 		c = false,
 	};
+	return a.b;
 }

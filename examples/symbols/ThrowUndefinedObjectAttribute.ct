@@ -1,0 +1,6 @@
+object Goo {}
+
+func Foo() {
+	var a = new Goo{};
+	return a.b;
+}

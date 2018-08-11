@@ -104,8 +104,7 @@ TEST_CASE("Operators") {
     CHECK(tokens[1] == Token("+=", Token::Type::BinaryOperator, 2));
     CHECK(tokens[4] == Token("!", Token::Type::UnaryOperator, 3));
     CHECK(tokens[6] == Token("!=", Token::Type::BinaryOperator, 4));
-    CHECK(tokens[9] == Token(".", Token::Type::BinaryOperator, 5));
-    CHECK(tokens[12] == Token("->", Token::Type::BinaryOperator, 6));
+    CHECK(tokens[9] == Token(".", Token::Type::Dot, 5));
     CHECK(tokens[15] == Token("*|", Token::Type::Invalid, 7));
     CHECK(tokens[16] == Token("?", Token::Type::UnaryOperator, 7));
 }
@@ -119,7 +118,7 @@ TEST_CASE("Invalid number tokens") {
     CHECK(tokens[0] == Token("0...", Token::Type::Invalid, 2));
     CHECK(tokens[1] == Token("1.2.3", Token::Type::Invalid, 3));
     CHECK(tokens[2] == Token("4.", Token::Type::Invalid, 4));
-    CHECK(tokens[3] == Token(".", Token::Type::BinaryOperator, 5));
+    CHECK(tokens[3] == Token(".", Token::Type::Dot, 5));
     CHECK(tokens[4] == Token("5", Token::Type::Number, 5));
 }
 
@@ -151,7 +150,7 @@ TEST_CASE("Keywords") {
     CHECK(tokens[6] == Token("0", Token::Type::Number, 3));
     CHECK(tokens[7] == Token("+", Token::Type::BinaryOperator, 3));
     CHECK(tokens[8] == Token("if", Token::Type::If, 3));
-    CHECK(tokens[9] == Token(".", Token::Type::BinaryOperator, 3));
+    CHECK(tokens[9] == Token(".", Token::Type::Dot, 3));
     CHECK(tokens[10] == Token("0.1", Token::Type::Number, 3));
     CHECK(tokens[11] == Token("func", Token::Type::Func, 3));
 }
@@ -188,7 +187,7 @@ TEST_CASE("More keywords on complex example") {
     CHECK(tokens[27] == Token("string01", Token::Type::Identifier, 7));
     CHECK(tokens[29] == Token("size", Token::Type::Identifier, 7));
     CHECK(tokens[32] == Token("[", Token::Type::SquareOpen, 8));
-    CHECK(tokens[37] == Token(".", Token::Type::BinaryOperator, 8));
+    CHECK(tokens[37] == Token(".", Token::Type::Dot, 8));
 }
 
 TEST_CASE("Negative numbers") {

@@ -28,6 +28,7 @@ TEST_CASE("Undefined symbol exception") {
     CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");
     CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "Found undefined identifier a.");
     CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowOnRedefinition.ct"), "Tried to redefine identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedObjectAttribute.ct"), "Found undefined identifier b.");
 }
 
 } // namespace SymbolTableTests
