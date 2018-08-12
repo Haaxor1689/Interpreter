@@ -153,4 +153,11 @@ TEST_CASE("Object") {
     CHECK(ToString(p.Evaluate("foo", { 5.0 })) == "{ a: 5, b: \"hello\", }");
 }
 
+TEST_CASE("Object attribute assign") {
+    Parser p("examples/evaluator/ObjectAssign.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { 10.0 })) == "{ a: 10, }");
+}
+
 } // namespace EvaluatorTests

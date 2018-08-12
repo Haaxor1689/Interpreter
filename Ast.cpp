@@ -115,8 +115,8 @@ VarID BinaryOperation::ReturnType() const {
     return returnType;
 }
 
-VariableAssign::VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line) {
+VariableAssign::VariableAssign(VarID name, VarID attribute, Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line), name(name), attribute(attribute) {
     lBinaryOperator::RequireToken(token);
     shift();
 
@@ -301,8 +301,8 @@ void Arguments::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-FunctionCall::FunctionCall(Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line) {
+FunctionCall::FunctionCall(VarID name, Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line), name(name) {
     lParenOpen::RequireToken(token);
     shift();
 
@@ -376,13 +376,9 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
         expression.emplace<VariableRef>(this, token, shift);
 
         if (FunctionCall::MatchToken(token)) {
-            VarID name = std::get<VariableRef>(expression).name;
-            expression.emplace<FunctionCall>(this, token, shift);
-            std::get<FunctionCall>(expression).name = name;
+            expression.emplace<FunctionCall>(std::get<VariableRef>(expression).name, this, token, shift);
         } else if (VariableAssign::MatchToken(token)) {
-            VarID name = std::get<VariableRef>(expression).name;
-            expression.emplace<VariableAssign>(this, token, shift);
-            std::get<VariableAssign>(expression).name = name;
+            expression.emplace<VariableAssign>(std::get<VariableRef>(expression).name, std::get<VariableRef>(expression).attribute, this, token, shift);
         }
     } else if (lString::MatchToken(token)) {
         lString::RequireToken(token);

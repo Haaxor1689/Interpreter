@@ -126,9 +126,10 @@ struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, E
 
 struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
     VarID name;
+    VarID attribute = 0;
     std::unique_ptr<Expression> value;
 
-    VariableAssign(Node* parent, const Token& token, const std::function<void()>& shift);
+    VariableAssign(VarID name, VarID attribute, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
 };
@@ -172,7 +173,7 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
     VarID name;
     std::list<Expression> arguments;
 
-    FunctionCall(Node* parent, const Token& token, const std::function<void()>& shift);
+    FunctionCall(VarID name, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
 };

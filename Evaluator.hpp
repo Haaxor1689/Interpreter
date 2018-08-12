@@ -219,7 +219,12 @@ private:
     Value Evaluate(const VariableAssign& node) {
         try {
             auto& value = GetValue(node.name);
-            value = Evaluate(*node.value);
+            if (node.attribute == 0) {
+                value = Evaluate(*node.value);
+            } else {
+                const ObjectDef& objectDef = root.GetObject(node.Symbols().GetType(node.name));
+                std::get<ObjectType>(value).values[objectDef.Symbols().GetName(node.attribute)] = Evaluate(*node.value);
+            }
             return value;
         } catch (const InternalException& err) {
             throw InterpreterException(err.what(), node.line);
