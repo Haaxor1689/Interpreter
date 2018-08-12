@@ -4,10 +4,12 @@ object Tst {
 	var c;
 }
 
-func Main() {
+func Main(var first): number {
+	var a: number = first;
 	var obj = new Tst {
 		a = "a",
 		b = 1,
 		c = true,
 	};
+	return a;
 }

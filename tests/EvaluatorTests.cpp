@@ -146,4 +146,11 @@ TEST_CASE("For loop") {
     CHECK(ToString(p.Evaluate("foo", { 2.0 })) == "2");
 }
 
+TEST_CASE("Object") {
+    Parser p("examples/evaluator/Object.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { 5.0 })) == "{ a: 5, b: \"hello\", }");
+}
+
 } // namespace EvaluatorTests

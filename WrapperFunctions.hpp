@@ -7,11 +7,11 @@
 
 namespace Interpreter {
     void Write(const Value& string) {
-        std::cout << string;
+        std::cout << ToString(string);
     }
 
     void WriteLine(const Value& string) {
-        std::cout << string << std::endl;
+        std::cout << ToString(string) << std::endl;
     }
 
     double ReadNumber() {

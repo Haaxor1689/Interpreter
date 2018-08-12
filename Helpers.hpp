@@ -20,12 +20,15 @@ using VarID = unsigned;
 using Value = std::variant<std::monostate, bool, double, std::string, ObjectType>;
 
 struct ObjectType {
+    ObjectType(std::map<std::string, Value>&& values) : values(std::move(values)) {}
+
     friend bool operator==(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
     friend bool operator!=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
     friend bool operator>=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
     friend bool operator<=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
     friend bool operator>(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
     friend bool operator<(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+
     std::map<std::string, Value> values;
 };
 
@@ -41,7 +44,7 @@ inline std::ostream& operator<<(std::ostream& os, const Value& val) {
             [&](const auto&) { os << "Void"; },
             [&](bool arg) { os << (arg ? "True" : "False"); },
             [&](double arg) { os << arg; },
-            [&](const std::string& arg) { os << arg; },
+            [&](const std::string& arg) { os << "\"" << arg << "\""; },
             [&](const ObjectType& arg) {
                 os << "{ ";
                 for (const auto& value : arg.values) {

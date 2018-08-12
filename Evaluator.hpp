@@ -161,19 +161,14 @@ private:
                 [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", node.line); },
                 [&](const UnaryOperation& arg) { return Evaluate(arg); },
                 [&](const BinaryOperation& arg) { return Evaluate(arg); },
-                [&](const VariableRef& arg) {
-                    try {
-                        return GetValue(arg.name);
-                    } catch (const InternalException& err) {
-                        throw InterpreterException(err.what(), arg.line);
-                    }
-                },
+                [&](const VariableRef& arg) { return Evaluate(arg); },
                 [&](const FunctionCall& arg) { return Evaluate(arg); },
                 [&](const VariableAssign& arg) { return Evaluate(arg); },
                 [&](bool arg) { return Value(arg); },
                 [&](double arg) { return Value(arg); },
                 [&](const std::string& arg) { return Value(arg); },
                 [&](const VariableDef& arg) { return Evaluate(arg); },
+                [&](const ObjectInitializer& arg) { return Evaluate(arg); },
             },
             node.expression
         );
@@ -203,6 +198,19 @@ private:
         localValues.emplace(node.name, node.value ? Evaluate(*node.value) : Value());
         try {
             return GetValue(node.name);
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
+        }
+    }
+
+    Value Evaluate(const VariableRef& node) {
+        try {
+            auto& value = GetValue(node.name);
+            if (node.attribute == 0) {
+                return value;
+            }
+            const ObjectDef& objectDef = root.GetObject(node.Symbols().GetType(node.name));
+            return std::get<ObjectType>(value).values[objectDef.Symbols().GetName(node.attribute)];
         } catch (const InternalException& err) {
             throw InterpreterException(err.what(), node.line);
         }
@@ -280,6 +288,22 @@ private:
             },
             func
         );
+    }
+
+    Value Evaluate(const ObjectInitializer& node) {
+        const ObjectDef& objectDef = root.GetObject(node.type);
+        std::map<std::string, Value> values;
+
+        for (const auto& attribute : objectDef.attributes) {
+            auto expressionIt = node.value.find(attribute.name);
+            if (expressionIt == node.value.end()) {
+                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(*attribute.value);
+            } else {
+                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(node.value.find(attribute.name)->second);
+            }
+        }
+
+        return Value(std::move(values));
     }
 };
 
