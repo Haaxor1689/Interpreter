@@ -162,20 +162,32 @@ private:
                 [&](const UnaryOperation& arg) { return Evaluate(arg); },
                 [&](const BinaryOperation& arg) { return Evaluate(arg); },
                 [&](const VariableRef& arg) { return Evaluate(arg); },
-                [&](const FunctionCall& arg) { return Evaluate(arg); },
-                [&](const VariableAssign& arg) { return Evaluate(arg); },
+                [&](const VariableDef& arg) { return Evaluate(arg); },
+                [&](const ObjectInitializer& arg) { return Evaluate(arg); },
+                [&](const ArrayInitializer& arg) { return Evaluate(arg); },
                 [&](bool arg) { return Value(arg); },
                 [&](double arg) { return Value(arg); },
                 [&](const std::string& arg) { return Value(arg); },
-                [&](const VariableDef& arg) { return Evaluate(arg); },
-                [&](const ObjectInitializer& arg) { return Evaluate(arg); },
             },
             node.expression
         );
     }
 
+    Value Evaluate(const ChainedOperation& node, Value* value) {
+        return std::visit(
+            Visitor{
+                [&](const auto&) -> Value { throw InterpreterException("Unknown operation.", node.line); },
+                [&](const DotOperation& arg) { return Evaluate(arg, value); },
+                [&](const IndexOperation& arg) { return Evaluate(arg, value); },
+                [&](const VariableAssign& arg) { return Evaluate(arg, value); },
+                [&](const FunctionCall& arg) { return Evaluate(arg); },
+            },
+            node.operation
+        );
+    }
+
     Value Evaluate(const FunctionCall& node) {
-        const FunctionDef& func = root.GetFunction(node.name);
+        const FunctionDef& func = root.GetFunction(node.identifier);
         if (node.arguments.size() != func.arguments->arguments.size()) {
             throw TypeMismatchException(std::to_string(node.arguments.size()) + "arg(s)", std::to_string(func.arguments->arguments.size()) + "arg(s)", node.line, "function call with incorrect arguments");
         }
@@ -191,7 +203,11 @@ private:
             return eval.Evaluate(func.externalFunction);
         }
 
-        return eval.Evaluate(*func.block);
+        auto value = eval.Evaluate(*func.block);
+        if (node.chainedOperation) {
+            return Evaluate(*node.chainedOperation, &value);
+        }
+        return value;
     }
 
     Value Evaluate(const VariableDef& node) {
@@ -204,27 +220,42 @@ private:
     }
 
     Value Evaluate(const VariableRef& node) {
+        if (node.Symbols().GetSymbol(node.name).isFunction) {
+            return Evaluate(*node.chainedOperation, nullptr);
+        }
         try {
             auto& value = GetValue(node.name);
-            if (node.attribute == 0) {
-                return value;
+            if (node.chainedOperation) {
+                return Evaluate(*node.chainedOperation, &value);
             }
-            const ObjectDef& objectDef = root.GetObject(node.Symbols().GetType(node.name));
-            return std::get<ObjectType>(value).values[objectDef.Symbols().GetName(node.attribute)];
+            return value;
         } catch (const InternalException& err) {
             throw InterpreterException(err.what(), node.line);
         }
     }
 
-    Value Evaluate(const VariableAssign& node) {
+    Value Evaluate(const DotOperation& node, Value* value) {
+        if (node.Symbols().GetSymbol(node.identifier).isFunction) {
+            return Evaluate(*node.chainedOperation, nullptr);
+        }
         try {
-            auto& value = GetValue(node.name);
-            if (node.attribute == 0) {
-                value = Evaluate(*node.value);
-            } else {
-                const ObjectDef& objectDef = root.GetObject(node.Symbols().GetType(node.name));
-                std::get<ObjectType>(value).values[objectDef.Symbols().GetName(node.attribute)] = Evaluate(*node.value);
+            auto& localValue = std::get<Object>(*value).values[node.SymbolsOfType().GetName(node.attribute)];
+            if (node.chainedOperation) {
+                return Evaluate(*node.chainedOperation, &localValue);
             }
+            return localValue;
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
+        }
+    }
+
+    Value Evaluate(const IndexOperation& node, Value* value) {
+        throw InterpreterException("Not implemented.", node.line);
+    }
+
+    Value Evaluate(const VariableAssign& node, Value* value) {
+        try {
+            *value = Evaluate(*node.value);
             return value;
         } catch (const InternalException& err) {
             throw InterpreterException(err.what(), node.line);
@@ -300,12 +331,22 @@ private:
         std::map<std::string, Value> values;
 
         for (const auto& attribute : objectDef.attributes) {
-            auto expressionIt = node.value.find(attribute.name);
-            if (expressionIt == node.value.end()) {
+            auto expressionIt = node.values.find(attribute.name);
+            if (expressionIt == node.values.end()) {
                 values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(*attribute.value);
             } else {
-                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(node.value.find(attribute.name)->second);
+                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(node.values.find(attribute.name)->second);
             }
+        }
+
+        return Value(std::move(values));
+    }
+
+    Value Evaluate(const ArrayInitializer& node) {
+        std::vector<Value> values;
+
+        for (const auto& value : node.values) {
+            values.push_back(Evaluate(value));
         }
 
         return Value(std::move(values));

@@ -12,6 +12,8 @@ namespace Interpreter {
 struct Symbol {
     VarID id;
     VarID type;
+    bool isFunction;
+    bool isArray;
 };
 
 class SymbolTable {
@@ -24,22 +26,29 @@ public:
     SymbolTable(SymbolTable* parent)
         : parent(parent) {}
 
-    VarID AddSymbol(const std::string& key, VarID type = 0) {
-        if (ContainsSymbol(key))
+    VarID AddSymbol(const std::string& key) {
+        if (ContainsSymbol(key)) {
             throw IdentifierRedefinitionException(key);
-
-        local[key].type = type;
-        local[key].id = NextID();
-        return local[key].id;
+        }
+        return local[key].id = NextID();
     }
 
-    Symbol GetSymbol(const std::string& key) const {
+    const Symbol& GetSymbol(const std::string& key) const {
         auto it = local.find(key);
         if (it != local.end())
             return it->second;
         if (parent != nullptr)
             return parent->GetSymbol(key);
         throw UndefinedIdentifierException(key);
+    }
+
+    const Symbol& GetSymbol(VarID id) const {
+        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
+        if (it != local.end())
+            return it->second;
+        if (parent != nullptr)
+            return parent->GetSymbol(id);
+        throw UndefinedIdentifierNameException(id);
     }
 
     bool ContainsSymbol(const std::string& key) const {
@@ -55,23 +64,16 @@ public:
         throw UndefinedIdentifierNameException(id);
     }
 
-    VarID GetType(VarID id) const {
-        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
-        if (it != local.end())
-            return it->second.type;
-        if (parent != nullptr)
-            return parent->GetType(id);
-        throw UndefinedIdentifierNameException(id);
-    }
-
-    void SetType(VarID id, VarID type) {
+    void SetSymbol(VarID id, VarID type, bool isFunction, bool isArray) {
         auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
         if (it != local.end()) {
             it->second.type = type;
+            it->second.isFunction = isFunction;
+            it->second.isArray = isArray;
             return;
         }
         if (parent != nullptr) {
-            parent->SetType(id, type);
+            parent->SetSymbol(id, type, isFunction, isArray);
             return;
         }
         throw UndefinedIdentifierNameException(id);

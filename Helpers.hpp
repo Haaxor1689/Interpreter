@@ -15,21 +15,35 @@ struct Visitor : Ts... { using Ts::operator()...; };
 template <class... Ts>
 Visitor(Ts...)->Visitor<Ts...>;
 
-struct ObjectType;
+struct Object;
+struct Array;
 using VarID = unsigned;
-using Value = std::variant<std::monostate, bool, double, std::string, ObjectType>;
+using Value = std::variant<std::monostate, bool, double, std::string, Object, Array>;
 
-struct ObjectType {
-    ObjectType(std::map<std::string, Value>&& values) : values(std::move(values)) {}
+struct Object {
+    Object(std::map<std::string, Value>&& values) : values(std::move(values)) {}
 
-    friend bool operator==(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
-    friend bool operator!=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
-    friend bool operator>=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
-    friend bool operator<=(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
-    friend bool operator>(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
-    friend bool operator<(const ObjectType&, const ObjectType&) { throw InternalException("NotImplemented"); }
+    friend bool operator==(const Object&, const Object&) { throw InternalException("NotImplemented"); }
+    friend bool operator!=(const Object&, const Object&) { throw InternalException("NotImplemented"); }
+    friend bool operator>=(const Object&, const Object&) { throw InternalException("NotImplemented"); }
+    friend bool operator<=(const Object&, const Object&) { throw InternalException("NotImplemented"); }
+    friend bool operator>(const Object&, const Object&) { throw InternalException("NotImplemented"); }
+    friend bool operator<(const Object&, const Object&) { throw InternalException("NotImplemented"); }
 
     std::map<std::string, Value> values;
+};
+
+struct Array {
+    Array(std::vector<Value>&& values) : values(std::move(values)) {}
+
+    friend bool operator==(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+    friend bool operator!=(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+    friend bool operator>=(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+    friend bool operator<=(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+    friend bool operator>(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+    friend bool operator<(const Array&, const Array&) { throw InternalException("NotImplemented"); }
+
+    std::vector<Value> values;
 };
 
 using fVoidValuePtr = void(*)(const Value&);
@@ -45,7 +59,7 @@ inline std::ostream& operator<<(std::ostream& os, const Value& val) {
             [&](bool arg) { os << (arg ? "True" : "False"); },
             [&](double arg) { os << arg; },
             [&](const std::string& arg) { os << "\"" << arg << "\""; },
-            [&](const ObjectType& arg) {
+            [&](const Object& arg) {
                 os << "{ ";
                 for (const auto& value : arg.values) {
                     os << value.first << ": " << value.second << ", ";
@@ -70,7 +84,7 @@ inline std::string ToString(const Value& val) {
                 return oss.str();
             },
             [&](const std::string& arg) { return arg; },
-            [&](const ObjectType& arg) {
+            [&](const Object& arg) {
                 std::ostringstream oss;
                 oss << arg;
                 return oss.str();

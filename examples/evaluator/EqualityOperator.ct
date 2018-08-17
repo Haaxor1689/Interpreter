@@ -1,12 +1,12 @@
 func foo(var a, var b) {
-    if == a b {
+    if ==(a, b) {
         return 0;
-    } elseif > a b {
+    } elseif >(a, b) {
         return 1;
-    } elseif < a b {
+    } elseif <(a, b) {
         return -1;
     } else {
-		  # Should never happen
+        # Should never happen
         return -2;
     }
 	 return -3;

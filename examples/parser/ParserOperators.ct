@@ -1,4 +1,4 @@
 func foo(var a) {
-    var b = + 1 2;
-    -= b 2;
+    var b = +(1, 2);
+    -=(b, 2);
 }

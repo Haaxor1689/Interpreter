@@ -105,10 +105,12 @@ TEST_CASE("Function call parsing") {
     ostringstream oss;
     oss << p.Tree();
     CHECK(oss.str() == prefix() +
-        "            FunctionCall: {\n"
+        "            Variable: {\n"
         "                Name: foo\n"
-        "                Arguments: {\n"
-        "                    Variable: a\n"
+        "                Call: {\n"
+        "                    Arguments: {\n"
+        "                        Variable: a\n"
+        "                    }\n"
         "                }\n"
         "            }\n"
         + postfix);
@@ -240,12 +242,14 @@ TEST_CASE("Assignment parsing") {
         "                Variable: c\n"
         "                Type: void\n"
         "            }\n"
-        "            Assignment: {\n"
-        "                Variable: c\n"
-        "                Value: {\n"
-        "                    FunctionCall: {\n"
+        "            Variable: {\n"
+        "                Name: c\n"
+        "                Assignment: {\n"
+        "                    Variable: {\n"
         "                        Name: goo\n"
-        "                        Arguments: {\n"
+        "                        Call: {\n"
+        "                            Arguments: {\n"
+        "                            }\n"
         "                        }\n"
         "                    }\n"
         "                }\n"
@@ -295,8 +299,7 @@ TEST_CASE("Wrong parser files") {
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongFuncBlock.ct"),
         "Failed to parse [Bracket '}' on line 3]. Expected Bracket.");
     CHECK_THROWS_WITH(TryCreateParser("parser/WrongStatement.ct"),
-        "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, "
-        "Binary Operator, Identifier, True, False, Number, String, Var, New, }."
+        "Failed to parse [Func 'func' on line 3]. Expected one of following { Return, For, If, While, Do, Unary Operator, Binary Operator, Identifier, Var, New, Bracket, True, False, Number, String, }."
     );
 }
 

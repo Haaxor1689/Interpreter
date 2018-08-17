@@ -20,6 +20,8 @@ using lParenOpen = TokenType<Token::Type::ParenOpen>;
 using lParenClose = TokenType<Token::Type::ParenClose>;
 using lCurlyOpen = TokenType<Token::Type::CurlyOpen>;
 using lCurlyClose = TokenType<Token::Type::CurlyClose>;
+using lSquareOpen = TokenType<Token::Type::SquareOpen>;
+using lSquareClose = TokenType<Token::Type::SquareClose>;
 using lColon = TokenType<Token::Type::Colon>;
 using lSemicolon = TokenType<Token::Type::Semicolon>;
 using lString = TokenType<Token::Type::String>;
@@ -45,6 +47,7 @@ using lDot = TokenType<Token::Type::Dot>;
 
 struct Block;
 struct Expression;
+struct ChainedOperation;
 struct Global;
 
 struct Node {
@@ -64,33 +67,64 @@ public:
     unsigned line;
     virtual void Print(std::ostream& os, size_t depth) const = 0;
     virtual VarID ReturnType() const = 0;
+    virtual void SetType(VarID type) { parent->SetType(type); };
     virtual SymbolTable& Symbols() { return parent->Symbols(); }
     virtual const SymbolTable& Symbols() const { return parent->Symbols(); }
+    virtual SymbolTable& SymbolsOfType();
+    virtual const SymbolTable& SymbolsOfType() const;
+
     std::string Indent(size_t depth) const {
         std::string ret;
         for (size_t i = 0; i < depth; ++i)
             ret += "    ";
         return ret;
     }
+
     void MatchType(VarID symbol, VarID expectedType, const std::string& cause = "") {
         const auto anyType = Symbols().GetSymbol("any").id;
-        if (Symbols().GetType(symbol) == anyType) {
-            Symbols().SetType(symbol, expectedType);
+        if (Symbols().GetSymbol(symbol).type == anyType) {
+            const auto& currentSymbol = Symbols().GetSymbol(symbol);
+            Symbols().SetSymbol(symbol, expectedType, currentSymbol.isFunction, currentSymbol.isArray);
         }
-        if (expectedType != anyType && Symbols().GetType(symbol) != expectedType) {
-            throw TypeMismatchException(Symbols().GetName(Symbols().GetType(symbol)), Symbols().GetName(expectedType), line, cause);
+        if (expectedType != anyType && Symbols().GetSymbol(symbol).type != expectedType) {
+            throw TypeMismatchException(Symbols().GetName(Symbols().GetSymbol(symbol).type), Symbols().GetName(expectedType), line, cause);
         }
     }
-    void MatchTypeConst(VarID symbol, VarID expectedType, const std::string& cause = "") const {
+
+    void CheckType(VarID symbolType, VarID expectedType, const std::string& cause = "") const {
         const auto anyType = Symbols().GetSymbol("any").id;
-        const auto symbolType = Symbols().GetType(symbol);
         if (expectedType != anyType && symbolType != anyType && symbolType != expectedType) {
-            throw TypeMismatchException(Symbols().GetName(Symbols().GetType(symbol)), Symbols().GetName(expectedType), line, cause);
+            throw TypeMismatchException(Symbols().GetName(symbolType), Symbols().GetName(expectedType), line, cause);
         }
     }
     
     Global& GetGlobal();
     const Global& GetGlobal() const;
+};
+
+struct IndexOperation : public Node, public Rule<lSquareOpen, Expression, lSquareClose> {
+    VarID identifier;
+    std::unique_ptr<Expression> index;
+    std::unique_ptr<ChainedOperation> chainedOperation;
+
+    IndexOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override;
+    SymbolTable& SymbolsOfType() override;
+    const SymbolTable& SymbolsOfType() const override;
+};
+
+struct DotOperation : public Node, public Rule<lDot, lIdentifier> {
+    VarID identifier;
+    VarID attribute;
+    std::unique_ptr<ChainedOperation> chainedOperation;
+
+    DotOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override;
+    void SetType(VarID type) override;
+    SymbolTable& SymbolsOfType() override;
+    const SymbolTable& SymbolsOfType() const override;
 };
 
 struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> {
@@ -113,7 +147,7 @@ struct UnaryOperation : public Node, public Rule<lUnaryOperator, Expression> {
     VarID ReturnType() const override;
 };
 
-struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, Expression> {
+struct BinaryOperation : public Node, public Rule<lBinaryOperator, lParenOpen, Expression, lComma, Expression, lParenClose> {
     std::unique_ptr<Expression> lhs;
     std::unique_ptr<Expression> rhs;
     std::string operation;
@@ -125,27 +159,30 @@ struct BinaryOperation : public Node, public Rule<lBinaryOperator, Expression, E
 };
 
 struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
-    VarID name;
-    VarID attribute = 0;
+    VarID identifier;
     std::unique_ptr<Expression> value;
 
-    VariableAssign(VarID name, VarID attribute, Node* parent, const Token& token, const std::function<void()>& shift);
+    VariableAssign(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
 };
 
 struct VariableRef : public Node, public Rule<lIdentifier> {
     VarID name;
-    VarID attribute = 0;
+    std::unique_ptr<ChainedOperation> chainedOperation;
 
     VariableRef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
+    void SetType(VarID type) override;
+    SymbolTable& SymbolsOfType() override;
+    const SymbolTable& SymbolsOfType() const override;
 };
 
 struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
     VarID name;
     std::unique_ptr<Expression> value;
+    bool isArray = false;
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -154,9 +191,18 @@ struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
 
 struct ObjectInitializer : public Node, public Rule<lNew, lIdentifier, lCurlyOpen, List<VariableAssign>, lCurlyClose> {
     VarID type;
-    std::map<VarID, Expression> value;
+    std::map<VarID, Expression> values;
 
     ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override { return type; }
+};
+
+struct ArrayInitializer : public Node, public Rule<lSquareOpen, List<Expression>, lSquareClose> {
+    VarID type;
+    std::list<Expression> values;
+
+    ArrayInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override { return type; }
 };
@@ -170,16 +216,31 @@ struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, l
 };
 
 struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression, lComma>>, lParenClose> {
-    VarID name;
+    VarID identifier;
     std::list<Expression> arguments;
+    std::unique_ptr<ChainedOperation> chainedOperation;
 
-    FunctionCall(VarID name, Node* parent, const Token& token, const std::function<void()>& shift);
+    FunctionCall(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override;
+    SymbolTable& SymbolsOfType() override;
+    const SymbolTable& SymbolsOfType() const override;
 };
 
-struct Expression : public Node, public RuleGroup<BinaryOperation, VariableRef, lTrue, lFalse, lNumber, lString, VariableDef, ObjectInitializer> {
-    std::variant<std::monostate, UnaryOperation, BinaryOperation, VariableRef, FunctionCall, VariableAssign, bool, double, std::string, VariableDef, ObjectInitializer> expression;
+struct ChainedOperation : public Node, public RuleGroup<DotOperation, IndexOperation, VariableAssign, FunctionCall> {
+    VarID parentIdentifier;
+    std::variant<std::monostate, DotOperation, IndexOperation, VariableAssign, FunctionCall> operation;
+
+    ChainedOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    void Print(std::ostream& os, size_t depth) const override;
+    VarID ReturnType() const override;
+    SymbolTable& SymbolsOfType() override;
+    const SymbolTable& SymbolsOfType() const override;
+};
+
+
+struct Expression : public Node, public RuleGroup<UnaryOperation, BinaryOperation, VariableRef, VariableDef, ObjectInitializer, ArrayInitializer, lTrue, lFalse, lNumber, lString> {
+    std::variant<std::monostate, UnaryOperation, BinaryOperation, VariableRef, VariableDef, ObjectInitializer, ArrayInitializer, bool, double, std::string> expression;
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -329,11 +390,15 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType() const override { return 0; }
 
+    FunctionDef& GetFunction(const std::string& name) {
+        return GetFunction(symbols.GetSymbol(name).id);
+    }
+
     const FunctionDef& GetFunction(const std::string& name) const {
         return GetFunction(symbols.GetSymbol(name).id);
     }
 
-    const FunctionDef& GetFunction(VarID funcId) const {
+    FunctionDef& GetFunction(VarID funcId) {
         auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
             return std::visit(
                 Visitor{
@@ -350,11 +415,19 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
         return std::get<FunctionDef>(*it);
     }
 
+    const FunctionDef& GetFunction(VarID funcId) const {
+        return const_cast<Global*>(this)->GetFunction(funcId);
+    }
+
     const ObjectDef& GetObject(const std::string& name) const {
         return GetObject(symbols.GetSymbol(name).id);
     }
 
-    const ObjectDef& GetObject(VarID objId) const {
+    ObjectDef& GetObject(const std::string& name) {
+        return GetObject(symbols.GetSymbol(name).id);
+    }
+
+    ObjectDef& GetObject(VarID objId) {
         auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
             return std::visit(
                 Visitor{
@@ -369,6 +442,10 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
         }
 
         return std::get<ObjectDef>(*it);
+    }
+
+    const ObjectDef& GetObject(VarID objId) const {
+        return const_cast<Global*>(this)->GetObject(objId);
     }
 };
 
