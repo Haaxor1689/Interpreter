@@ -87,10 +87,10 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const SymbolTable& symbols) {
-        os << "{ ";
+        os << "[ ";
         for (const auto& pair : symbols.local)
-            os << pair.second << ", ";
-        return os << "}";
+            os << "\"" << pair.second << "\", ";
+        return os << "]";
     }
 };
 

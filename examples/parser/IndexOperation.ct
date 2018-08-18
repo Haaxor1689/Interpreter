@@ -1,0 +1,9 @@
+object Goo {}
+
+func Foo(var a) {
+	var goo = new Goo {};
+	goo["str"];
+	var str = "str";
+	goo[str];
+	goo[a];
+}

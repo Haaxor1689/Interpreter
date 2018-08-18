@@ -1,8 +1,8 @@
-func IsValidRow(var column: number): bool {
-	return &&(<=(column, 2), >=(column, 0));
+func IsValidColumn(var column: string): bool {
+	return ||(==(column, "X"), ||(==(column, "Y"), ==(column, "Z")));
 }
 
-func IsValidColumn(var row: string): bool {
+func IsValidRow(var row: string): bool {
 	return ||(==(row, "A"), ||(==(row, "B"), ==(row, "C")));
 }
 
@@ -12,7 +12,13 @@ object Column {
 	var C = " ";
 }
 
-func PrintGrid(var grid: Column[]): void {
+object Grid {
+	var X = new Column{};
+	var Y = new Column{};
+	var Z = new Column{};
+}
+
+func PrintGrid(var grid: Grid): void {
 	WriteLine(" |A|B|C|");
 	WriteLine("--------");
 	for var i in 0 ... 2 {
@@ -28,7 +34,7 @@ func PrintGrid(var grid: Column[]): void {
 func Play(): string {
 	var shouldEnd = false;
 
-	var grid: Column[] = [ new Column{}, new Column{}, new Column{}, ];
+	var grid: Grid = new Grid{};
 
 	var currentPlayer = "X";
 
@@ -36,20 +42,20 @@ func Play(): string {
 		PrintGrid(grid);
 		WriteLine(+("Player ", +(currentPlayer, "'s turn")));
 
-		WriteLine("Write row number:");
-		var row = ReadNumber();
+		WriteLine("Select row:");
+		var row = ReadText();
 		if !IsValidRow(row) {
 			WriteLine(+("Invalid row ", row));
 		}
 
-		WriteLine("Write column letter:");
+		WriteLine("Select column:");
 		var column = ReadText();
 		if !IsValidColumn(column) {
 			WriteLine(+("Invalid column ", column));
 		}
 
-		if ==(grid[row][column], " ") {
-			grid[row][column] = currentPlayer;
+		if ==(grid[column][row], " ") {
+			grid[column][row] = currentPlayer;
 			if ==(currentPlayer, "X") {
 				currentPlayer = "O";
 			} else {

@@ -15,9 +15,9 @@ TEST_CASE("Compiles correctly") {
 
 TEST_CASE("IsValidColumn") {
     Parser p("examples/TicTacToe.ct");
-    CHECK(ToString(p.Evaluate("IsValidColumn", { 1.0 })) == "True");
-    CHECK(ToString(p.Evaluate("IsValidColumn", { -1.0 })) == "False");
-    CHECK(ToString(p.Evaluate("IsValidColumn", { 3.0 })) == "False");
+    CHECK(ToString(p.Evaluate("IsValidColumn", { "X"s })) == "True");
+    CHECK(ToString(p.Evaluate("IsValidColumn", { "Y"s })) == "True");
+    CHECK(ToString(p.Evaluate("IsValidColumn", { "y"s })) == "False");
 }
 
 TEST_CASE("IsValidRow") {

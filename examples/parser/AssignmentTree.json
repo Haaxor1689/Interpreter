@@ -1,0 +1,106 @@
+{
+	"Symbols": [ "10:ReadNumber", "11:ReadText", "6:Write", "8:WriteLine", "1:any", "3:bool", "13:foo", "12:goo", "5:number", "4:string", "2:void", ],
+	"Definitions": [
+		{
+			"FunctionDef": {
+				"Name": "6:Write",
+				"Symbols": [ "7:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "7:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "8:WriteLine",
+				"Symbols": [ "9:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "9:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "10:ReadNumber",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "5:number",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "11:ReadText",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "4:string",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "12:goo",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "2:void",
+				"Block": [ ],
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "13:foo",
+				"Symbols": [ "14:a", "15:b", "16:c", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "14:a",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+				"Block": [
+					{
+						"Definition": {
+							"Variable": "15:b",
+							"Type": "1:any",
+							"Value": {
+								"Variable": "14:a",
+							},
+						},
+					},
+					{
+						"Definition": {
+							"Variable": "16:c",
+							"Type": "2:void",
+						},
+					},
+					{
+						"Variable": {
+							"Name": "16:c",
+							"Assignment": {
+								"Variable": {
+									"Name": "12:goo",
+									"Call": {
+										"Arguments": {
+										},
+									},
+								},
+							},
+						},
+					},
+				],
+			},
+		},
+	],
+}

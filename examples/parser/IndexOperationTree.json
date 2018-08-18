@@ -1,0 +1,119 @@
+{
+	"Symbols": [ "13:Foo", "12:Goo", "10:ReadNumber", "11:ReadText", "6:Write", "8:WriteLine", "1:any", "3:bool", "5:number", "4:string", "2:void", ],
+	"Definitions": [
+		{
+			"FunctionDef": {
+				"Name": "6:Write",
+				"Symbols": [ "7:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "7:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "8:WriteLine",
+				"Symbols": [ "9:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "9:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "10:ReadNumber",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "5:number",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "11:ReadText",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "4:string",
+			},
+		},
+		{
+			"Object": {
+				"Name": "12:Goo",
+				"Symbols": [ ],
+				"Attributes": [ ],
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "13:Foo",
+				"Symbols": [ "14:a", "15:goo", "16:str", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "14:a",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+				"Block": [
+					{
+						"Definition": {
+							"Variable": "15:goo",
+							"Type": "12:Goo",
+							"Value": {
+								"ObjectInit": {
+									"Type": "12:Goo",
+								},
+							},
+						},
+					},
+					{
+						"Variable": {
+							"Name": "15:goo",
+							"Index": {
+								"String": "str",
+							},
+						},
+					},
+					{
+						"Definition": {
+							"Variable": "16:str",
+							"Type": "4:string",
+							"Value": {
+								"String": "str",
+							},
+						},
+					},
+					{
+						"Variable": {
+							"Name": "15:goo",
+							"Index": {
+								"Variable": "16:str",
+							},
+						},
+					},
+					{
+						"Variable": {
+							"Name": "15:goo",
+							"Index": {
+								"Variable": "14:a",
+							},
+						},
+					},
+				],
+			},
+		},
+	],
+}

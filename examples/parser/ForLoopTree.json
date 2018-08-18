@@ -1,0 +1,121 @@
+{
+	"Symbols": [ "10:ReadNumber", "11:ReadText", "6:Write", "8:WriteLine", "1:any", "3:bool", "12:foo", "5:number", "4:string", "2:void", ],
+	"Definitions": [
+		{
+			"FunctionDef": {
+				"Name": "6:Write",
+				"Symbols": [ "7:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "7:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "8:WriteLine",
+				"Symbols": [ "9:message", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "9:message",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "10:ReadNumber",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "5:number",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "11:ReadText",
+				"Symbols": [ ],
+				"Arguments": [ ],
+				"Returns": "4:string",
+			},
+		},
+		{
+			"FunctionDef": {
+				"Name": "12:foo",
+				"Symbols": [ "13:a", "14:bbb", "16:ccc", "15:yyy", ],
+				"Arguments": [
+					{
+						"Definition": {
+							"Variable": "13:a",
+							"Type": "1:any",
+						},
+					},
+				],
+				"Returns": "2:void",
+				"Block": [
+					{
+						"Definition": {
+							"Variable": "14:bbb",
+							"Type": "1:any",
+						},
+					},
+					{
+						"Definition": {
+							"Variable": "15:yyy",
+							"Type": "1:any",
+						},
+					},
+					{
+						"Definition": {
+							"Variable": "16:ccc",
+							"Type": "1:any",
+						},
+					},
+					{
+						"For": {
+							"Symbols": [ "17:aaa", ],
+							"ControlVariable": {
+								"Definition": {
+									"Variable": "17:aaa",
+									"Type": "1:any",
+								},
+							},
+							"In": {
+								"Variable": "14:bbb",
+							},
+							"Block": [
+								{
+									"For": {
+										"Symbols": [ "18:xxx", ],
+										"ControlVariable": {
+											"Definition": {
+												"Variable": "18:xxx",
+												"Type": "1:any",
+											},
+										},
+										"In": {
+											"Variable": "15:yyy",
+										},
+										"Block": [
+											{
+												"Variable": "16:ccc",
+											},
+										],
+									},
+								},
+							],
+						},
+					},
+				],
+			},
+		},
+	],
+}

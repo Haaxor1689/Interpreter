@@ -41,21 +41,22 @@ IndexOperation::IndexOperation(const SymbolTable& scope, VarID identifier, Node*
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
-        // TODO
-        chainedOperation = std::make_unique<ChainedOperation>(scope, scope[identifier].id, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(scope, Symbols()["any"].id, this, token, shift);
     }
     Logger::Created(*this);
 }
 
 void IndexOperation::Print(std::ostream& os, size_t depth) const {
-    // TODO
-    throw InterpreterException("Not implemented", line);
+    os << Indent(depth) << "\"Index\": {\n";
+    index->Print(os, depth + 1);
+    os << Indent(depth) << "},\n";
 }
 
 VarID IndexOperation::ReturnType(const SymbolTable* scope) const {
-    // TODO Find proper return type
-    throw InterpreterException("Not implemented", line);
+    return Symbols()["any"].id;
 }
+
+void IndexOperation::SetType(VarID type) { }
 
 DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), scope(scope), identifier(identifier) {
@@ -72,9 +73,9 @@ DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* par
 }
 
 void DotOperation::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Dot {\n";
-    os << Indent(depth + 1) << "Attribute: " << scope[attribute] << "\n";
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "\"Dot\": {\n";
+    os << Indent(depth + 1) << "\"Attribute\": " << scope[attribute] << ",\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID DotOperation::ReturnType(const SymbolTable* scope) const {
@@ -113,13 +114,13 @@ Range::Range(Node* parent, const Token& token, const std::function<void()>& shif
 
 void Range::Print(std::ostream& os, size_t depth) const {
     if (to) {
-        os << Indent(depth) << "From: {\n";
+        os << Indent(depth) << "\"From\": {\n";
         from->Print(os, depth + 1);
-        os << Indent(depth ) << "}\n";
-        os << Indent(depth) << "To: {\n";
+        os << Indent(depth ) << "},\n";
+        os << Indent(depth) << "\"To\": {\n";
         to->Print(os, depth + 1);
-        os << Indent(depth) << "}\n";
-        os << Indent(depth) << "IncludeLast: " << (shouldIncludeLast ? "True" : "False") << "\n";
+        os << Indent(depth) << "},\n";
+        os << Indent(depth) << "\"IncludeLast\": " << (shouldIncludeLast ? "true" : "false") << ",\n";
     } else {
         from->Print(os, depth);
     }
@@ -142,12 +143,12 @@ UnaryOperation::UnaryOperation(Node* parent, const Token& token, const std::func
 }
 
 void UnaryOperation::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "UnaryOperation: {\n";
-    os << Indent(depth + 1) << "Operator: " << operation << "\n";
-    os << Indent(depth + 1) << "Value: {\n";
+    os << Indent(depth) << "\"UnaryOperation\": {\n";
+    os << Indent(depth + 1) << "\"Operator\": \"" << operation << "\",\n";
+    os << Indent(depth + 1) << "\"Value\": {\n";
     value->Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth) << "}\n";
+    os << Indent(depth + 1) << "},\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID UnaryOperation::ReturnType(const SymbolTable* scope) const {
@@ -179,15 +180,15 @@ BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::fu
 }
 
 void BinaryOperation::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "BinaryOperation: {\n";
-    os << Indent(depth + 1) << "Operator: " << operation << "\n";
-    os << Indent(depth + 1) << "Lhs: {\n";
+    os << Indent(depth) << "\"BinaryOperation\": {\n";
+    os << Indent(depth + 1) << "\"Operator\": \"" << operation << "\",\n";
+    os << Indent(depth + 1) << "\"Lhs\": {\n";
     lhs->Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth + 1) << "Rhs: {\n";
+    os << Indent(depth + 1) << "},\n";
+    os << Indent(depth + 1) << "\"Rhs\": {\n";
     rhs->Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth) << "}\n";
+    os << Indent(depth + 1) << "},\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID BinaryOperation::ReturnType(const SymbolTable* scope) const {
@@ -206,9 +207,9 @@ VariableAssign::VariableAssign(VarID identifier, Node* parent, const Token& toke
 }
 
 void VariableAssign::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Assignment: {\n";
+    os << Indent(depth) << "\"Assignment\": {\n";
     value->Print(os, depth + 1);
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID VariableAssign::ReturnType(const SymbolTable* scope) const {
@@ -229,13 +230,13 @@ VariableRef::VariableRef(Node* parent, const Token& token, const std::function<v
 
 void VariableRef::Print(std::ostream& os, size_t depth) const {
     if (!chainedOperation) {
-        os << Indent(depth) << "Variable: " << Symbols()[name] << "\n";
+        os << Indent(depth) << "\"Variable\": \"" << Symbols()[name] << "\",\n";
         return;
     }
-    os << Indent(depth) << "Variable: {\n";
-    os << Indent(depth + 1) << "Name: " << Symbols()[name] << "\n";
+    os << Indent(depth) << "\"Variable\": {\n";
+    os << Indent(depth + 1) << "\"Name\": \"" << Symbols()[name] << "\",\n";
     chainedOperation->Print(os, depth + 1);
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID VariableRef::ReturnType(const SymbolTable* scope) const {
@@ -287,15 +288,15 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
 }
 
 void VariableDef::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Definition: {\n";
-    os << Indent(depth + 1) << "Variable: " << Symbols()[name] << "\n";
-    os << Indent(depth + 1) << "Type: " << Symbols()[Symbols()[name].type] << "\n";
+    os << Indent(depth) << "\"Definition\": {\n";
+    os << Indent(depth + 1) << "\"Variable\": \"" << Symbols()[name] << "\",\n";
+    os << Indent(depth + 1) << "\"Type\": \"" << Symbols()[Symbols()[name].type] << "\",\n";
     if (value) {
-        os << Indent(depth + 1) << "Value: {\n";
+        os << Indent(depth + 1) << "\"Value\": {\n";
         value->Print(os, depth + 2);
-        os << Indent(depth + 1) << "}\n";
+        os << Indent(depth + 1) << "},\n";
     }
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID VariableDef::ReturnType(const SymbolTable* scope) const {
@@ -358,15 +359,15 @@ ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std
 }
 
 void ObjectInitializer::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "ObjectInit: {\n";
-    os << Indent(depth + 1) << "Type: " << Symbols()[type] << "\n"; 
+    os << Indent(depth) << "\"ObjectInit\": {\n";
+    os << Indent(depth + 1) << "\"Type\": \"" << Symbols()[type] << "\",\n"; 
     const ObjectDef& objectDef = GetGlobal().GetObject(type);
     for (const auto& pair : values) {
-        os << Indent(depth + 1) << objectDef.Symbols()[pair.first].name << ": {\n";
+        os << Indent(depth + 1) << "\"" << objectDef.Symbols()[pair.first].name << "\": {\n";
         pair.second.Print(os, depth + 2);
-        os << Indent(depth + 1) << "}\n";
+        os << Indent(depth + 1) << "},\n";
     }
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 ArrayInitializer::ArrayInitializer(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -400,15 +401,15 @@ ArrayInitializer::ArrayInitializer(Node* parent, const Token& token, const std::
 }
 
 void ArrayInitializer::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "ArrayInit: {\n";
-    os << Indent(depth + 1) << "Type: " << Symbols()[type] << "\n";
+    os << Indent(depth) << "\"ArrayInit\": {\n";
+    os << Indent(depth + 1) << "\"Type\": \"" << Symbols()[type] << "\",\n";
     unsigned i = 0;
     for (const auto& value : values) {
-        os << Indent(depth + 1) << i++ << ": {\n";
+        os << Indent(depth + 1) << "\"" << i++ << "\": {\n";
         value.Print(os, depth + 2);
-        os << Indent(depth + 1) << "}\n";
+        os << Indent(depth + 1) << "},\n";
     }
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 Arguments::Arguments(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -433,10 +434,17 @@ Arguments::Arguments(Node* parent, const Token& token, const std::function<void(
 }
 
 void Arguments::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Arguments: {\n";
-    for (const auto& arg : arguments)
-        arg.Print(os, depth + 1);
-    os << Indent(depth) << "}\n";
+    if (arguments.empty()) {
+        os << Indent(depth) << "\"Arguments\": [ ],\n";
+        return;
+    }
+    os << Indent(depth) << "\"Arguments\": [\n";
+    for (const auto& arg : arguments) {
+        os << Indent(depth + 1) << "{\n";
+        arg.Print(os, depth + 2);
+        os << Indent(depth + 1) << "},\n";
+    }
+    os << Indent(depth) << "],\n";
 }
 
 FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
@@ -493,12 +501,12 @@ FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* par
 }
 
 void FunctionCall::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Call: {\n";
-    os << Indent(depth + 1) << "Arguments: {\n";
+    os << Indent(depth) << "\"Call\": {\n";
+    os << Indent(depth + 1) << "\"Arguments\": {\n";
     for (const auto& arg : arguments)
         arg.Print(os, depth + 2);
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth) << "}\n";
+    os << Indent(depth + 1) << "},\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID FunctionCall::ReturnType(const SymbolTable* scope) const {
@@ -523,7 +531,7 @@ ChainedOperation::ChainedOperation(const SymbolTable& scope, VarID identifier, N
 void ChainedOperation::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
-            [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
+            [&, depth](const auto&) { os << Indent(depth) << "\"Unknown expression\": null,\n"; },
             [&, depth](const DotOperation& arg) { arg.Print(os, depth); },
             [&, depth](const IndexOperation& arg) { arg.Print(os, depth); },
             [&, depth](const VariableAssign& arg) { arg.Print(os, depth); },
@@ -584,15 +592,15 @@ Expression::Expression(Node* parent, const Token& token, const std::function<voi
 void Expression::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
-            [&, depth](const auto&) { os << Indent(depth) << "Unknown expression\n"; },
+            [&, depth](const auto&) { os << Indent(depth) << "\"Unknown expression\": null,\n"; },
             [&, depth](const UnaryOperation& arg) { arg.Print(os, depth); },
             [&, depth](const BinaryOperation& arg) { arg.Print(os, depth); },
             [&, depth](const VariableRef& arg) { arg.Print(os, depth); },
             [&, depth](const FunctionCall& arg) { arg.Print(os, depth); },
             [&, depth](const VariableAssign& arg) { arg.Print(os, depth); },
-            [&, depth](bool arg) { os << Indent(depth) << "Bool: " << (arg ? "True" : "False") << "\n"; },
-            [&, depth](double arg) { os << Indent(depth) << "Number: " << arg << "\n"; },
-            [&, depth](const std::string& arg) { os << Indent(depth) << "String: \"" << arg << "\"\n"; },
+            [&, depth](bool arg) { os << Indent(depth) << "\"Bool\": " << (arg ? "true" : "false") << ",\n"; },
+            [&, depth](double arg) { os << Indent(depth) << "\"Number\": " << arg << ",\n"; },
+            [&, depth](const std::string& arg) { os << Indent(depth) << "\"String\": \"" << arg << "\",\n"; },
             [&, depth](const VariableDef& arg) { arg.Print(os, depth); },
             [&, depth](const ObjectInitializer& arg) { arg.Print(os, depth); },
         },
@@ -648,13 +656,13 @@ WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void(
 }
 
 void WhileExpr::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << (isDoWhile ? "DoWhile: {\n" : "While: {\n");
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "Condition: {\n";
+    os << Indent(depth) << (isDoWhile ? "\"DoWhile\": {\n" : "\"While\": {\n");
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    os << Indent(depth + 1) << "\"Condition\": {\n";
     condition ? condition->Print(os, depth + 2) : void();
-    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "},\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID WhileExpr::ReturnType(const SymbolTable* scope) const {
@@ -671,10 +679,10 @@ Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
 }
 
 void Else::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Else: {\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth) << "\"Else\": {\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID Else::ReturnType(const SymbolTable* scope) const {
@@ -692,13 +700,13 @@ Elseif::Elseif(Node* parent, const Token& token, const std::function<void()>& sh
 }
 
 void Elseif::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Elseif: {\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "Condition: {\n";
+    os << Indent(depth) << "{\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    os << Indent(depth + 1) << "\"Condition\": {\n";
     condition ? condition->Print(os, depth + 2) : void();
-    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "},\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID Elseif::ReturnType(const SymbolTable* scope) const {
@@ -716,13 +724,13 @@ If::If(Node* parent, const Token& token, const std::function<void()>& shift)
 }
 
 void If::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "If: {\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "Condition: {\n";
+    os << Indent(depth) << "\"If\": {\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    os << Indent(depth + 1) << "\"Condition\": {\n";
     condition ? condition->Print(os, depth + 2) : void();
-    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "},\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID If::ReturnType(const SymbolTable* scope) const {
@@ -744,9 +752,11 @@ IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& sh
 
 void IfExpr::Print(std::ostream& os, size_t depth) const {
     ifStatement->Print(os, depth);
+    os << Indent(depth) << "\"ElseIf\": [\n";
     for (const auto& statement : elseifStatements) {
-        statement.Print(os, depth);
+        statement.Print(os, depth + 1);
     }
+    os << Indent(depth) << "],\n";
     elseStatement ? elseStatement->Print(os, depth) : void();
 }
 
@@ -794,16 +804,16 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
 }
 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "For: {\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "ControlVariable: {\n";
+    os << Indent(depth) << "\"For\": {\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    os << Indent(depth + 1) << "\"ControlVariable\": {\n";
     controlVariable ? controlVariable->Print(os, depth + 2) : void();
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth + 1) << "In: {\n";
+    os << Indent(depth + 1) << "},\n";
+    os << Indent(depth + 1) << "\"In\": {\n";
     range ? range->Print(os, depth + 2) : void();
-    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "},\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID ForExpr::ReturnType(const SymbolTable* scope) const {
@@ -825,9 +835,9 @@ Return::Return(Node* parent, const Token& token, const std::function<void()>& sh
 }
 
 void Return::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Return: {\n";
+    os << Indent(depth) << "\"Return\": {\n";
     value ? value->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID Return::ReturnType(const SymbolTable* scope) const {
@@ -857,7 +867,7 @@ Statement::Statement(Node* parent, const Token& token, const std::function<void(
 void Statement::Print(std::ostream& os, size_t depth) const {
     std::visit(
         Visitor{
-            [&, depth](const auto&) { os << Indent(depth) << "Unknown statement\n"; },
+            [&, depth](const auto&) { os << Indent(depth) << "\"Unknown statement\": null,\n"; },
             [&, depth](const Return& arg) { arg.Print(os, depth); },
             [&, depth](const ForExpr& arg) { arg.Print(os, depth); },
             [&, depth](const IfExpr& arg) { arg.Print(os, depth); },
@@ -952,11 +962,17 @@ Block::Block(Node* parent, const Token& token, const std::function<void()>& shif
 }
 
 void Block::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Block: {\n";
-    for (const auto& statement : statements) {
-        statement.Print(os, depth + 1);
+    if (statements.empty()) {
+        os << Indent(depth) << "\"Block\": [ ],\n";
+        return;
     }
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "\"Block\": [\n";
+    for (const auto& statement : statements) {
+        os << Indent(depth + 1) << "{\n";
+        statement.Print(os, depth + 2);
+        os << Indent(depth + 1) << "},\n";
+    }
+    os << Indent(depth) << "],\n";
 }
 
 VarID Block::ReturnType(const SymbolTable* scope) const {
@@ -1033,18 +1049,13 @@ FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<v
 }
 
 void FunctionDef::Print(std::ostream& os, size_t depth) const {
-    if (!std::holds_alternative<std::monostate>(externalFunction)) {
-        return;
-    }
-    os << Indent(depth) << "FunctionDef: {\n";
-    os << Indent(depth + 1) << "Name: " << Symbols()[name] << "\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
+    os << Indent(depth) << "\"FunctionDef\": {\n";
+    os << Indent(depth + 1) << "\"Name\": \"" << Symbols()[name] << "\",\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
     arguments ? arguments->Print(os, depth + 1) : void();
-    os << Indent(depth + 1) << "Returns: {\n";
-    os << Indent(depth + 2) << "Type: " << Symbols()[Symbols()[name].type] << "\n";
-    os << Indent(depth + 1) << "}\n";
+    os << Indent(depth + 1) << "\"Returns\": \"" << Symbols()[Symbols()[name].type] << "\",\n";
     block ? block->Print(os, depth + 1) : void();
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 VarID FunctionDef::ReturnType(const SymbolTable* scope) const {
@@ -1076,15 +1087,21 @@ ObjectDef::ObjectDef(Node* parent, const Token& token, const std::function<void(
 }
 
 void ObjectDef::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Object: {\n";
-    os << Indent(depth + 1) << "Name: " << Symbols()[name] << "\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    os << Indent(depth + 1) << "Attributes: {\n";
-    for (const auto& attribute : attributes) {
-        attribute.Print(os, depth + 2);
+    os << Indent(depth) << "\"Object\": {\n";
+    os << Indent(depth + 1) << "\"Name\": \"" << Symbols()[name] << "\",\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    if (attributes.empty()) {
+        os << Indent(depth + 1) << "\"Attributes\": [ ],\n";
+    } else {
+        os << Indent(depth + 1) << "\"Attributes\": [\n";
+        for (const auto& attribute : attributes) {
+            os << Indent(depth + 2) << "{\n";
+            attribute.Print(os, depth + 3);
+            os << Indent(depth + 2) << "},\n";
+        }
+        os << Indent(depth + 1) << "],\n";
     }
-    os << Indent(depth + 1) << "}\n";
-    os << Indent(depth) << "}\n";
+    os << Indent(depth) << "},\n";
 }
 
 Global::Global(const Token& token, const std::function<void()>& shift)
@@ -1113,17 +1130,22 @@ Global::Global(const Token& token, const std::function<void()>& shift)
 }
 
 void Global::Print(std::ostream& os, size_t depth) const {
-    os << Indent(depth) << "Global: {\n";
-    os << Indent(depth + 1) << "Symbols: " << Symbols() << "\n";
-    for (const auto& definition : definitions)
+    os << Indent(depth) << "{\n";
+    os << Indent(depth + 1) << "\"Symbols\": " << Symbols() << ",\n";
+    os << Indent(depth + 1) << "\"Definitions\": [\n";
+    for (const auto& definition : definitions) {
+        os << Indent(depth + 2) << "{\n";
         std::visit(
             Visitor {
-                [&, depth](const auto&) { os << Indent(depth + 1) << "Unknown statement\n"; },
-                [&, depth](const FunctionDef& arg) { arg.Print(os, depth + 1); },
-                [&, depth](const ObjectDef& arg) { arg.Print(os, depth + 1); },
+                [&, depth](const auto&) { os << Indent(depth + 3) << "\"Unknown definition\": null,\n"; },
+                [&, depth](const FunctionDef& arg) { arg.Print(os, depth + 3); },
+                [&, depth](const ObjectDef& arg) { arg.Print(os, depth + 3); },
             },
             definition
         );
+        os << Indent(depth + 2) << "},\n";
+    }
+    os << Indent(depth + 1) << "],\n";
     os << Indent(depth) << "}\n";
 }
 

@@ -76,7 +76,7 @@ public:
     std::string Indent(size_t depth) const {
         std::string ret;
         for (size_t i = 0; i < depth; ++i)
-            ret += "    ";
+            ret += "\t";
         return ret;
     }
 
@@ -109,6 +109,7 @@ struct IndexOperation : public Node, public Rule<lSquareOpen, Expression, lSquar
     IndexOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
+    void SetType(VarID type) override;
 };
 
 struct DotOperation : public Node, public Rule<lDot, lIdentifier> {
