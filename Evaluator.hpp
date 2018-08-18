@@ -220,7 +220,7 @@ private:
     }
 
     Value Evaluate(const VariableRef& node) {
-        if (node.Symbols().GetSymbol(node.name).isFunction) {
+        if (node.Symbols()[node.name].isFunction) {
             return Evaluate(*node.chainedOperation, nullptr);
         }
         try {
@@ -235,11 +235,11 @@ private:
     }
 
     Value Evaluate(const DotOperation& node, Value* value) {
-        if (node.Symbols().GetSymbol(node.identifier).isFunction) {
+        if (node.Symbols()[node.identifier].isFunction) {
             return Evaluate(*node.chainedOperation, nullptr);
         }
         try {
-            auto& localValue = std::get<Object>(*value).values[node.scope.GetName(node.attribute)];
+            auto& localValue = std::get<Object>(*value).values[node.scope[node.attribute].name];
             if (node.chainedOperation) {
                 return Evaluate(*node.chainedOperation, &localValue);
             }
@@ -333,9 +333,9 @@ private:
         for (const auto& attribute : objectDef.attributes) {
             auto expressionIt = node.values.find(attribute.name);
             if (expressionIt == node.values.end()) {
-                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(*attribute.value);
+                values[objectDef.Symbols()[attribute.name].name] = Evaluate(*attribute.value);
             } else {
-                values[objectDef.Symbols().GetName(attribute.name)] = Evaluate(node.values.find(attribute.name)->second);
+                values[objectDef.Symbols()[attribute.name].name] = Evaluate(node.values.find(attribute.name)->second);
             }
         }
 

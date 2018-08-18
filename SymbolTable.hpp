@@ -11,9 +11,18 @@ namespace Interpreter {
 
 struct Symbol {
     VarID id;
+    std::string name;
     VarID type;
     bool isFunction;
     bool isArray;
+
+    friend std::ostream& operator<<(std::ostream& os, const Symbol& symbol) {
+        return os << symbol.id << ":" << symbol.name;
+    }
+
+    friend std::string ToString(const Symbol& symbol) {
+        return std::to_string(symbol.id) + ":" + symbol.name;
+    }
 };
 
 class SymbolTable {
@@ -26,45 +35,37 @@ public:
     SymbolTable(SymbolTable* parent)
         : parent(parent) {}
 
-    VarID AddSymbol(const std::string& key) {
-        if (ContainsSymbol(key)) {
+    VarID Add(const std::string& key) {
+        if (Contains(key)) {
             throw IdentifierRedefinitionException(key);
         }
+        local[key].name = key;
         return local[key].id = NextID();
     }
 
-    const Symbol& GetSymbol(const std::string& key) const {
+    bool Contains(const std::string& key) const {
+        return local.find(key) != local.end() || (parent != nullptr && parent->Contains(key));
+    }
+
+    const Symbol& operator[](const std::string& key) const {
         auto it = local.find(key);
         if (it != local.end())
             return it->second;
         if (parent != nullptr)
-            return parent->GetSymbol(key);
+            return (*parent)[key];
         throw UndefinedIdentifierException(key);
     }
 
-    const Symbol& GetSymbol(VarID id) const {
+    const Symbol& operator[](VarID id) const {
         auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
         if (it != local.end())
             return it->second;
         if (parent != nullptr)
-            return parent->GetSymbol(id);
+            return (*parent)[id];
         throw UndefinedIdentifierNameException(id);
     }
 
-    bool ContainsSymbol(const std::string& key) const {
-        return local.find(key) != local.end() || (parent != nullptr && parent->ContainsSymbol(key));
-    }
-
-    std::string GetName(VarID id) const {
-        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
-        if (it != local.end())
-            return std::to_string(id) + ":" + it->first;
-        if (parent != nullptr)
-            return parent->GetName(id);
-        throw UndefinedIdentifierNameException(id);
-    }
-
-    void SetSymbol(VarID id, VarID type, bool isFunction, bool isArray) {
+    void Set(VarID id, VarID type, bool isFunction, bool isArray) {
         auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
         if (it != local.end()) {
             it->second.type = type;
@@ -73,7 +74,7 @@ public:
             return;
         }
         if (parent != nullptr) {
-            parent->SetSymbol(id, type, isFunction, isArray);
+            parent->Set(id, type, isFunction, isArray);
             return;
         }
         throw UndefinedIdentifierNameException(id);
@@ -88,7 +89,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const SymbolTable& symbols) {
         os << "{ ";
         for (const auto& pair : symbols.local)
-            os << pair.second.id << ":" << pair.first << ", ";
+            os << pair.second << ", ";
         return os << "}";
     }
 };

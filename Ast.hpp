@@ -81,20 +81,20 @@ public:
     }
 
     void MatchType(VarID symbol, VarID expectedType, const std::string& cause = "") {
-        const auto anyType = Symbols().GetSymbol("any").id;
-        if (Symbols().GetSymbol(symbol).type == anyType) {
-            const auto& currentSymbol = Symbols().GetSymbol(symbol);
-            Symbols().SetSymbol(symbol, expectedType, currentSymbol.isFunction, currentSymbol.isArray);
+        const auto anyType = Symbols()["any"].id;
+        const auto& currentSymbol = Symbols()[symbol];
+        if (currentSymbol.type == anyType) {
+            Symbols().Set(symbol, expectedType, currentSymbol.isFunction, currentSymbol.isArray);
         }
-        if (expectedType != anyType && Symbols().GetSymbol(symbol).type != expectedType) {
-            throw TypeMismatchException(Symbols().GetName(Symbols().GetSymbol(symbol).type), Symbols().GetName(expectedType), line, cause);
+        if (expectedType != anyType && currentSymbol.type != expectedType) {
+            throw TypeMismatchException(ToString(Symbols()[currentSymbol.type]), ToString(Symbols()[expectedType]), line, cause);
         }
     }
 
     void CheckType(VarID symbolType, VarID expectedType, const std::string& cause = "") const {
-        const auto anyType = Symbols().GetSymbol("any").id;
+        const auto anyType = Symbols()["any"].id;
         if (expectedType != anyType && symbolType != anyType && symbolType != expectedType) {
-            throw TypeMismatchException(Symbols().GetName(symbolType), Symbols().GetName(expectedType), line, cause);
+            throw TypeMismatchException(ToString(Symbols()[symbolType]), ToString(Symbols()[expectedType]), line, cause);
         }
     }
     
@@ -380,11 +380,11 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
     VarID ReturnType(const SymbolTable* scope = nullptr) const override { return 0; }
 
     FunctionDef& GetFunction(const std::string& name) {
-        return GetFunction(symbols.GetSymbol(name).id);
+        return GetFunction(symbols[name].id);
     }
 
     const FunctionDef& GetFunction(const std::string& name) const {
-        return GetFunction(symbols.GetSymbol(name).id);
+        return GetFunction(symbols[name].id);
     }
 
     FunctionDef& GetFunction(VarID funcId) {
@@ -409,11 +409,11 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
     }
 
     const ObjectDef& GetObject(const std::string& name) const {
-        return GetObject(symbols.GetSymbol(name).id);
+        return GetObject(symbols[name].id);
     }
 
     ObjectDef& GetObject(const std::string& name) {
-        return GetObject(symbols.GetSymbol(name).id);
+        return GetObject(symbols[name].id);
     }
 
     ObjectDef& GetObject(VarID objId) {

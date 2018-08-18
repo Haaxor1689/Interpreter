@@ -18,8 +18,8 @@ namespace SymbolTableTests {
 TEST_CASE("Function names") {
     Parser p("examples/symbols/FunctionDef.ct");
     INFO(p.Tree());
-    CHECK(p.Tree().Root().Symbols().GetSymbol("foo").id == 12);
-    CHECK(p.Tree().Root().Symbols().GetSymbol("goo").id == 13);
+    CHECK(p.Tree().Root().Symbols()["foo"].id == 12);
+    CHECK(p.Tree().Root().Symbols()["goo"].id == 13);
 }
 
 TEST_CASE("Undefined symbol exception") {
