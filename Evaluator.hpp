@@ -235,7 +235,7 @@ private:
     }
 
     Value Evaluate(const DotOperation& node, Value* value) {
-        if (node.Symbols()[node.identifier].isFunction) {
+        if (node.scope[node.attribute].isFunction) {
             return Evaluate(*node.chainedOperation, nullptr);
         }
         try {

@@ -66,7 +66,7 @@ DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* par
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
-        chainedOperation = std::make_unique<ChainedOperation>(scope, attribute, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(SymbolsOfType(scope, attribute), attribute, this, token, shift);
     }
     Logger::Created(*this);
 }
@@ -362,7 +362,7 @@ void ObjectInitializer::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth + 1) << "Type: " << Symbols()[type] << "\n"; 
     const ObjectDef& objectDef = GetGlobal().GetObject(type);
     for (const auto& pair : values) {
-        os << Indent(depth + 1) << objectDef.Symbols()[pair.first] << ": {\n";
+        os << Indent(depth + 1) << objectDef.Symbols()[pair.first].name << ": {\n";
         pair.second.Print(os, depth + 2);
         os << Indent(depth + 1) << "}\n";
     }

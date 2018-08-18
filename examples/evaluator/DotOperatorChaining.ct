@@ -1,0 +1,15 @@
+object Foo {
+	var value: string = "World";
+}
+
+object Goo {
+	var a = new Foo{};
+	var b: Foo;
+}
+
+func foo(var a: string) {
+	var goo = new Goo { b = new Foo{}, };
+	goo.a = new Foo { value = a, };
+	goo.b.value = +(goo.a.value, goo.b.value);
+	return goo;
+}

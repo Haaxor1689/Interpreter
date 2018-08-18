@@ -160,4 +160,11 @@ TEST_CASE("Object attribute assign") {
     CHECK(ToString(p.Evaluate("foo", { 10.0 })) == "{ a: 10, }");
 }
 
+TEST_CASE("Dot operator chaining evaluation") {
+    Parser p("examples/evaluator/DotOperatorChaining.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { "Hello"s })) == "{ a: { value: \"Hello\", }, b: { value: \"HelloWorld\", }, }");
+}
+
 } // namespace EvaluatorTests
