@@ -15,7 +15,7 @@ object Column {
 func PrintGrid(var grid: Column[]): void {
 	WriteLine(" |A|B|C|");
 	WriteLine("--------");
-	for var i in 0...2 {
+	for var i in 0 ... 2 {
 		Write(i);
 		for var j in [ "A", "B", "C", ] {
 			Write(+("|", grid[i][j]));
@@ -28,7 +28,7 @@ func PrintGrid(var grid: Column[]): void {
 func Play(): string {
 	var shouldEnd = false;
 
-	var grid: Column[] = [ new Grid{}, new Grid{}, new Grid{}, ];
+	var grid: Column[] = [ new Column{}, new Column{}, new Column{}, ];
 
 	var currentPlayer = "X";
 
@@ -48,9 +48,9 @@ func Play(): string {
 			WriteLine(+("Invalid column ", column));
 		}
 
-		if == grid[row][column] " " {
+		if ==(grid[row][column], " ") {
 			grid[row][column] = currentPlayer;
-			if == currentPlayer "X" {
+			if ==(currentPlayer, "X") {
 				currentPlayer = "O";
 			} else {
 				currentPlayer = "X";

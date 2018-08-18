@@ -2,6 +2,7 @@
 
 #include "Lexer.hpp"
 #include "WrapperFunctions.hpp"
+#include <string>
 
 namespace Interpreter {
 
@@ -168,6 +169,7 @@ VarID UnaryOperation::ReturnType() const {
 BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     lBinaryOperator::RequireToken(token);
+    auto operatorToken = token;
     operation = token.text;
     shift();
 
@@ -184,7 +186,7 @@ BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::fu
     lParenClose::RequireToken(token);
     shift();
 
-    returnType = token.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : lhs->ReturnType();
+    returnType = operatorToken.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : lhs->ReturnType();
 }
 
 void BinaryOperation::Print(std::ostream& os, size_t depth) const {
@@ -639,6 +641,7 @@ VarID Expression::ReturnType() const {
             [&](const std::string&) { return Symbols().GetSymbol("string").id; },
             [&](const VariableDef& arg) { return arg.ReturnType(); },
             [&](const ObjectInitializer& arg) { return arg.ReturnType(); },
+            [&](const ArrayInitializer& arg) { return arg.ReturnType(); },
         },
         expression
     );
