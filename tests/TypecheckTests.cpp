@@ -18,35 +18,39 @@ namespace TypecheckTests {
 TEST_CASE("Function return") {
     CHECK_NOTHROW(TryCreateParser("typecheck/VoidReturn.ct"));
     CHECK_THROWS_WITH(TryCreateParser("typecheck/ArgumentReturn.ct"),
-        "Type mismatch error on line 7. Expected \"number\" got \"bool\".");
+        "Type mismatch error on line 7. Expected \"5:number\" got \"3:bool\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/MissingReturn.ct"),
-        "Type mismatch error on line 1 caused by wrong return type. Expected \"bool\" got \"void\".");
+        "Type mismatch error on line 1 caused by wrong return type. Expected \"3:bool\" got \"2:void\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongReturn.ct"),
-        "Type mismatch error on line 1 caused by wrong return type. Expected \"number\" got \"bool\".");
+        "Type mismatch error on line 1 caused by wrong return type. Expected \"5:number\" got \"3:bool\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongMultipleReturn.ct"),
-        "Type mismatch error on line 2 caused by wrong return type. Expected \"void\" got \"number\".");
+        "Type mismatch error on line 2 caused by wrong return type. Expected \"2:void\" got \"5:number\".");
 }
 
 TEST_CASE("AnyType") {
     CHECK_THROWS_WITH(TryCreateParser("typecheck/ReassignAny.ct"),
-        "Type mismatch error on line 3. Expected \"number\" got \"string\".");
+        "Type mismatch error on line 3. Expected \"5:number\" got \"4:string\".");
 }
 
 TEST_CASE("Function arguments") {
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongArguments.ct"),
-        "Type mismatch error on line 5. Expected \"string\" got \"number\".");
+        "Type mismatch error on line 5. Expected \"4:string\" got \"5:number\".");
 }
 
 TEST_CASE("Object typecheck") {
     CHECK_NOTHROW(TryCreateParser("typecheck/CorrectObject.ct"));
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectDef.ct"),
-        "Type mismatch error on line 2. Expected \"number\" got \"string\".");
+        "Type mismatch error on line 2. Expected \"5:number\" got \"4:string\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectInit.ct"),
-        "Type mismatch error on line 7 caused by missing b: any. Expected \"Goo\" got \"Object\".");
+        "Type mismatch error on line 7 caused by missing 14:b of type 1:any. Expected \"12:Goo\" got \"Unknown object\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectInit2.ct"),
-        "Type mismatch error on line 1. Expected \"number\" got \"string\".");
+        "Type mismatch error on line 1. Expected \"5:number\" got \"4:string\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongObjectAttr.ct"),
-        "Type mismatch error on line 5 caused by wrong return type. Expected \"number\" got \"string\".");
+        "Type mismatch error on line 5 caused by wrong return type. Expected \"5:number\" got \"4:string\".");
+}
+
+TEST_CASE("Dot operator chaining") {
+    CHECK_NOTHROW(TryCreateParser("typecheck/DotOperatorChaining.ct"));
 }
 
 } // namespace TypecheckTests

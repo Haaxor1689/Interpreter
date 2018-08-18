@@ -239,7 +239,7 @@ private:
             return Evaluate(*node.chainedOperation, nullptr);
         }
         try {
-            auto& localValue = std::get<Object>(*value).values[node.SymbolsOfType().GetName(node.attribute)];
+            auto& localValue = std::get<Object>(*value).values[node.scope.GetName(node.attribute)];
             if (node.chainedOperation) {
                 return Evaluate(*node.chainedOperation, &localValue);
             }

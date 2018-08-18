@@ -58,7 +58,7 @@ public:
     std::string GetName(VarID id) const {
         auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
         if (it != local.end())
-            return it->first;
+            return std::to_string(id) + ":" + it->first;
         if (parent != nullptr)
             return parent->GetName(id);
         throw UndefinedIdentifierNameException(id);

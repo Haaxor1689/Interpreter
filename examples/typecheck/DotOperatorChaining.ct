@@ -1,0 +1,21 @@
+object A {
+	var goo: string;
+}
+
+object B {
+	var a: A;
+	var goo: number;
+}
+
+func foo() {
+	var b: B = new B {
+		a = new A {
+			goo = "goo",
+		},
+		goo = 2,
+	};
+	var str: string = b.a.goo;
+	var num: number = b.goo;
+	b.a.goo = "foo";
+	b.goo = 3;
+}

@@ -4,6 +4,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <string>
 #include <variant>
 
 #include "Helpers.hpp"
@@ -66,12 +67,11 @@ public:
     Node* parent;
     unsigned line;
     virtual void Print(std::ostream& os, size_t depth) const = 0;
-    virtual VarID ReturnType() const = 0;
+    virtual VarID ReturnType(const SymbolTable* scope = nullptr) const = 0;
     virtual void SetType(VarID type) { parent->SetType(type); };
     virtual SymbolTable& Symbols() { return parent->Symbols(); }
     virtual const SymbolTable& Symbols() const { return parent->Symbols(); }
-    virtual SymbolTable& SymbolsOfType();
-    virtual const SymbolTable& SymbolsOfType() const;
+    const SymbolTable& SymbolsOfType(const SymbolTable& scope, VarID identifier) const;
 
     std::string Indent(size_t depth) const {
         std::string ret;
@@ -103,28 +103,24 @@ public:
 };
 
 struct IndexOperation : public Node, public Rule<lSquareOpen, Expression, lSquareClose> {
-    VarID identifier;
     std::unique_ptr<Expression> index;
     std::unique_ptr<ChainedOperation> chainedOperation;
 
-    IndexOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    IndexOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
-    SymbolTable& SymbolsOfType() override;
-    const SymbolTable& SymbolsOfType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct DotOperation : public Node, public Rule<lDot, lIdentifier> {
     VarID identifier;
     VarID attribute;
     std::unique_ptr<ChainedOperation> chainedOperation;
+    const SymbolTable& scope;
 
-    DotOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    DotOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     void SetType(VarID type) override;
-    SymbolTable& SymbolsOfType() override;
-    const SymbolTable& SymbolsOfType() const override;
 };
 
 struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> {
@@ -134,7 +130,7 @@ struct Range : public Node, public Rule<Expression, lRangeOperator, Expression> 
 
     Range(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct UnaryOperation : public Node, public Rule<lUnaryOperator, Expression> {
@@ -144,7 +140,7 @@ struct UnaryOperation : public Node, public Rule<lUnaryOperator, Expression> {
 
     UnaryOperation(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct BinaryOperation : public Node, public Rule<lBinaryOperator, lParenOpen, Expression, lComma, Expression, lParenClose> {
@@ -155,7 +151,7 @@ struct BinaryOperation : public Node, public Rule<lBinaryOperator, lParenOpen, E
 
     BinaryOperation(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
@@ -164,7 +160,7 @@ struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
 
     VariableAssign(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct VariableRef : public Node, public Rule<lIdentifier> {
@@ -173,10 +169,8 @@ struct VariableRef : public Node, public Rule<lIdentifier> {
 
     VariableRef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     void SetType(VarID type) override;
-    SymbolTable& SymbolsOfType() override;
-    const SymbolTable& SymbolsOfType() const override;
 };
 
 struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
@@ -186,7 +180,7 @@ struct VariableDef : public Node, public Rule<lVar, lIdentifier> {
 
     VariableDef(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct ObjectInitializer : public Node, public Rule<lNew, lIdentifier, lCurlyOpen, List<VariableAssign>, lCurlyClose> {
@@ -195,7 +189,7 @@ struct ObjectInitializer : public Node, public Rule<lNew, lIdentifier, lCurlyOpe
 
     ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override { return type; }
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override { return type; }
 };
 
 struct ArrayInitializer : public Node, public Rule<lSquareOpen, List<Expression>, lSquareClose> {
@@ -204,7 +198,7 @@ struct ArrayInitializer : public Node, public Rule<lSquareOpen, List<Expression>
 
     ArrayInitializer(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override { return type; }
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override { return type; }
 };
 
 struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, lComma>>, lParenClose> {
@@ -212,7 +206,7 @@ struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, l
 
     Arguments(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override { return 0; }
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override { return 0; }
 };
 
 struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression, lComma>>, lParenClose> {
@@ -220,22 +214,17 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
     std::list<Expression> arguments;
     std::unique_ptr<ChainedOperation> chainedOperation;
 
-    FunctionCall(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    FunctionCall(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
-    SymbolTable& SymbolsOfType() override;
-    const SymbolTable& SymbolsOfType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct ChainedOperation : public Node, public RuleGroup<DotOperation, IndexOperation, VariableAssign, FunctionCall> {
-    VarID parentIdentifier;
     std::variant<std::monostate, DotOperation, IndexOperation, VariableAssign, FunctionCall> operation;
 
-    ChainedOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    ChainedOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
-    SymbolTable& SymbolsOfType() override;
-    const SymbolTable& SymbolsOfType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 
@@ -244,7 +233,7 @@ struct Expression : public Node, public RuleGroup<UnaryOperation, BinaryOperatio
 
     Expression(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>, Rule<lDo, Block, lWhile, Expression, lSemicolon>> {
@@ -257,7 +246,7 @@ struct WhileExpr : public Node, public RuleGroup<Rule<lWhile, Expression, Block>
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct Else : public Node, public Rule<lElse, Block> {
@@ -268,7 +257,7 @@ struct Else : public Node, public Rule<lElse, Block> {
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct Elseif : public Node, public Rule<lElseif, Expression, Block> {
@@ -280,7 +269,7 @@ struct Elseif : public Node, public Rule<lElseif, Expression, Block> {
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct If : public Node, public Rule<lIf, Expression, Block> {
@@ -292,7 +281,7 @@ struct If : public Node, public Rule<lIf, Expression, Block> {
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
@@ -302,7 +291,7 @@ struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
 
     IfExpr(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Block> {
@@ -315,7 +304,7 @@ struct ForExpr : public Node, public Rule<lFor, VariableRef, lIn, Expression, Bl
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct Return : public Node, public Rule<lReturn, Expression> {
@@ -323,7 +312,7 @@ struct Return : public Node, public Rule<lReturn, Expression> {
 
     Return(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct Statement : public Node, public RuleGroup<Return, ForExpr, IfExpr, WhileExpr, Rule<Expression, lSemicolon>> {
@@ -331,7 +320,7 @@ struct Statement : public Node, public RuleGroup<Return, ForExpr, IfExpr, WhileE
 
     Statement(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     bool HasReturn() const;
 };
 
@@ -341,7 +330,7 @@ struct Block : public Node, public Rule<lCurlyOpen, List<Statement>, lCurlyClose
 
     Block(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     bool HasReturn() const;
 };
 
@@ -365,7 +354,7 @@ struct FunctionDef : public Node, public Rule<lFunc, lIdentifier, Arguments, Blo
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override;
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
 
 struct ObjectDef : public Node, public Rule<lObject, lIdentifier, lCurlyOpen, List<VariableDef>, lCurlyClose> {
@@ -377,7 +366,7 @@ struct ObjectDef : public Node, public Rule<lObject, lIdentifier, lCurlyOpen, Li
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override { return 0; }
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override { return 0; }
 };
 
 struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>, lEoF> {
@@ -388,7 +377,7 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
     SymbolTable& Symbols() override { return symbols; }
     const SymbolTable& Symbols() const override { return symbols; }
     void Print(std::ostream& os, size_t depth) const override;
-    VarID ReturnType() const override { return 0; }
+    VarID ReturnType(const SymbolTable* scope = nullptr) const override { return 0; }
 
     FunctionDef& GetFunction(const std::string& name) {
         return GetFunction(symbols.GetSymbol(name).id);

@@ -1,16 +1,17 @@
 #include "Ast.hpp"
 
 #include "Lexer.hpp"
+#include "Logger.hpp"
 #include "WrapperFunctions.hpp"
-#include <string>
 
 namespace Interpreter {
 
-SymbolTable& Node::SymbolsOfType() {
-    return GetGlobal().GetObject(ReturnType()).Symbols();
-}
-const SymbolTable& Node::SymbolsOfType() const {
-    return GetGlobal().GetObject(ReturnType()).Symbols();
+const SymbolTable& Node::SymbolsOfType(const SymbolTable& scope, VarID identifier) const {
+    const auto symbol = scope.GetSymbol(identifier);
+    if (symbol.isFunction || symbol.type <= 5) {
+        return scope;
+    }
+    return GetGlobal().GetObject(symbol.type).Symbols();
 }
 
 Global& Node::GetGlobal() {
@@ -29,8 +30,8 @@ const Global& Node::GetGlobal() const {
     return *dynamic_cast<const Global*>(actual);
 }
 
-IndexOperation::IndexOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line), identifier(identifier) {
+IndexOperation::IndexOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line) {
     lSquareOpen::RequireToken(token);
     shift();
 
@@ -41,8 +42,9 @@ IndexOperation::IndexOperation(VarID identifier, Node* parent, const Token& toke
 
     if (ChainedOperation::MatchToken(token)) {
         // TODO
-        chainedOperation = std::make_unique<ChainedOperation>(identifier, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(scope, scope.GetSymbol(identifier).id, this, token, shift);
     }
+    Logger::Created(*this);
 }
 
 void IndexOperation::Print(std::ostream& os, size_t depth) const {
@@ -50,54 +52,38 @@ void IndexOperation::Print(std::ostream& os, size_t depth) const {
     throw InterpreterException("Not implemented", line);
 }
 
-VarID IndexOperation::ReturnType() const {
+VarID IndexOperation::ReturnType(const SymbolTable* scope) const {
     // TODO Find proper return type
-    return chainedOperation ? chainedOperation->ReturnType() : parent->SymbolsOfType().GetSymbol(identifier).type;
-}
-
-SymbolTable& IndexOperation::SymbolsOfType() {
-    // TODO
     throw InterpreterException("Not implemented", line);
 }
 
-const SymbolTable& IndexOperation::SymbolsOfType() const {
-    // TODO
-    throw InterpreterException("Not implemented", line);
-}
-
-DotOperation::DotOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line), identifier(identifier) {
+DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line), scope(scope), identifier(identifier) {
     lDot::RequireToken(token);
     shift();
 
-    attribute = parent->SymbolsOfType().GetSymbol(token.text).id;
+    attribute = scope.GetSymbol(token.text).id;
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
-        chainedOperation = std::make_unique<ChainedOperation>(attribute, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(scope, attribute, this, token, shift);
     }
+    Logger::Created(*this);
 }
 
 void DotOperation::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "Dot {\n";
-    os << Indent(depth + 1) << "Attribute: " << parent->SymbolsOfType().GetName(attribute) << "\n";
+    os << Indent(depth + 1) << "Attribute: " << scope.GetName(attribute) << "\n";
     os << Indent(depth) << "}\n";
 }
 
-VarID DotOperation::ReturnType() const {
-    return chainedOperation ? chainedOperation->ReturnType() : parent->SymbolsOfType().GetSymbol(attribute).type;
+VarID DotOperation::ReturnType(const SymbolTable* scope) const {
+    const auto symbol = (scope ? *scope : Symbols()).GetSymbol(attribute);
+    return chainedOperation ? chainedOperation->ReturnType(symbol.isFunction ? nullptr : &GetGlobal().GetObject(symbol.type).Symbols()) : symbol.type;
 }
 
 void DotOperation::SetType(VarID type) {
-    CheckType(parent->SymbolsOfType().GetSymbol(attribute).type, type);
-}
-
-SymbolTable& DotOperation::SymbolsOfType() {
-    return parent->SymbolsOfType();
-}
-
-const SymbolTable& DotOperation::SymbolsOfType() const {
-    return parent->SymbolsOfType();
+    CheckType(scope.GetSymbol(attribute).type, type);
 }
 
 Range::Range(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -122,6 +108,7 @@ Range::Range(Node* parent, const Token& token, const std::function<void()>& shif
     if (to->ReturnType() != anyType && to->ReturnType() != numberType) {
         throw TypeMismatchException(Symbols().GetName(numberType), Symbols().GetName(to->ReturnType()), line, "range must be a number");
     }
+    Logger::Created(*this);
 }
 
 void Range::Print(std::ostream& os, size_t depth) const {
@@ -138,8 +125,8 @@ void Range::Print(std::ostream& os, size_t depth) const {
     }
 }
 
-VarID Range::ReturnType() const {
-    return Symbols().GetSymbol("range").id;
+VarID Range::ReturnType(const SymbolTable* scope) const {
+    return (scope ? *scope : Symbols()).GetSymbol("range").id;
 }
 
 UnaryOperation::UnaryOperation(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -151,6 +138,7 @@ UnaryOperation::UnaryOperation(Node* parent, const Token& token, const std::func
     value = std::make_unique<Expression>(this, token, shift);
 
     returnType = token.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : value->ReturnType();
+    Logger::Created(*this);
 }
 
 void UnaryOperation::Print(std::ostream& os, size_t depth) const {
@@ -162,7 +150,7 @@ void UnaryOperation::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID UnaryOperation::ReturnType() const {
+VarID UnaryOperation::ReturnType(const SymbolTable* scope) const {
     return returnType;
 }
 
@@ -187,6 +175,7 @@ BinaryOperation::BinaryOperation(Node* parent, const Token& token, const std::fu
     shift();
 
     returnType = operatorToken.IsLogicalOperator() ? Symbols().GetSymbol("bool").id : lhs->ReturnType();
+    Logger::Created(*this);
 }
 
 void BinaryOperation::Print(std::ostream& os, size_t depth) const {
@@ -201,7 +190,7 @@ void BinaryOperation::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID BinaryOperation::ReturnType() const {
+VarID BinaryOperation::ReturnType(const SymbolTable* scope) const {
     return returnType;
 }
 
@@ -213,6 +202,7 @@ VariableAssign::VariableAssign(VarID identifier, Node* parent, const Token& toke
     value = std::make_unique<Expression>(this, token, shift);
 
     parent->SetType(value->ReturnType());
+    Logger::Created(*this);
 }
 
 void VariableAssign::Print(std::ostream& os, size_t depth) const {
@@ -221,8 +211,8 @@ void VariableAssign::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID VariableAssign::ReturnType() const {
-    return value->ReturnType();
+VarID VariableAssign::ReturnType(const SymbolTable* scope) const {
+    return value->ReturnType(scope);
 }
 
 VariableRef::VariableRef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -232,8 +222,9 @@ VariableRef::VariableRef(Node* parent, const Token& token, const std::function<v
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
-        chainedOperation = std::make_unique<ChainedOperation>(name, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(SymbolsOfType(Symbols(), name), name, this, token, shift);
     }
+    Logger::Created(*this);
 }
 
 void VariableRef::Print(std::ostream& os, size_t depth) const {
@@ -247,20 +238,13 @@ void VariableRef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID VariableRef::ReturnType() const {
-    return chainedOperation ? chainedOperation->ReturnType() : Symbols().GetSymbol(name).type;
+VarID VariableRef::ReturnType(const SymbolTable* scope) const {
+    const auto symbol = (scope ? *scope : Symbols()).GetSymbol(name);
+    return chainedOperation ? chainedOperation->ReturnType(symbol.isFunction ? nullptr : &GetGlobal().GetObject(symbol.type).Symbols()) : symbol.type;
 }
 
 void VariableRef::SetType(VarID type) {
     MatchType(name, type);
-}
-
-SymbolTable& VariableRef::SymbolsOfType() {
-    return GetGlobal().GetObject(Symbols().GetSymbol(name).type).Symbols();
-}
-
-const SymbolTable& VariableRef::SymbolsOfType() const {
-    return GetGlobal().GetObject(Symbols().GetSymbol(name).type).Symbols();
 }
 
 VariableDef::VariableDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -299,6 +283,7 @@ VariableDef::VariableDef(Node* parent, const Token& token, const std::function<v
 
         MatchType(name, value->ReturnType());
     }
+    Logger::Created(*this);
 }
 
 void VariableDef::Print(std::ostream& os, size_t depth) const {
@@ -313,8 +298,8 @@ void VariableDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID VariableDef::ReturnType() const {
-    return Symbols().GetSymbol(name).type;
+VarID VariableDef::ReturnType(const SymbolTable* scope) const {
+    return (scope ? *scope : Symbols()).GetSymbol(name).type;
 }
 
 ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -359,15 +344,16 @@ ObjectInitializer::ObjectInitializer(Node* parent, const Token& token, const std
             if (!variable.value) {
                 throw TypeMismatchException(
                     Symbols().GetName(type),
-                    "Object",
+                    "Unknown object",
                     line,
-                    "missing " + objectDef.Symbols().GetName(variable.name) + ": " + Symbols().GetName(objectDef.Symbols().GetSymbol(variable.name).type)
+                    "missing " + objectDef.Symbols().GetName(variable.name) + " of type " + Symbols().GetName(objectDef.Symbols().GetSymbol(variable.name).type)
                 );  
             }
         } else {
             objectDef.CheckType(objectDef.Symbols().GetSymbol(variable.name).type, expressionIt->second.ReturnType());
         }
     }
+    Logger::Created(*this);
 }
 
 void ObjectInitializer::Print(std::ostream& os, size_t depth) const {
@@ -409,6 +395,7 @@ ArrayInitializer::ArrayInitializer(Node* parent, const Token& token, const std::
             throw TypeMismatchException(Symbols().GetName(type), Symbols().GetName(valueReturnType), value.line);
         }
     }
+    Logger::Created(*this);
 }
 
 void ArrayInitializer::Print(std::ostream& os, size_t depth) const {
@@ -451,7 +438,7 @@ void Arguments::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-FunctionCall::FunctionCall(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), identifier(identifier) {
     lParenOpen::RequireToken(token);
     shift();
@@ -472,7 +459,7 @@ FunctionCall::FunctionCall(VarID identifier, Node* parent, const Token& token, c
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
-        chainedOperation = std::make_unique<ChainedOperation>(Symbols().GetSymbol(identifier).id, this, token, shift);
+        chainedOperation = std::make_unique<ChainedOperation>(scope, scope.GetSymbol(identifier).type, this, token, shift);
     }
 
     // Signature check
@@ -501,6 +488,7 @@ FunctionCall::FunctionCall(VarID identifier, Node* parent, const Token& token, c
             throw TypeMismatchException(functionDef.Symbols().GetName(argType), Symbols().GetName(inType), line);
         }
     }
+    Logger::Created(*this);
 }
 
 void FunctionCall::Print(std::ostream& os, size_t depth) const {
@@ -512,28 +500,20 @@ void FunctionCall::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID FunctionCall::ReturnType() const {
-    return chainedOperation ? chainedOperation->ReturnType() : Symbols().GetSymbol(identifier).type;
+VarID FunctionCall::ReturnType(const SymbolTable* scope) const {
+    return chainedOperation ? chainedOperation->ReturnType(scope) : (scope ? *scope : Symbols()).GetSymbol(identifier).type;
 }
 
-SymbolTable& FunctionCall::SymbolsOfType() {
-    return GetGlobal().GetObject(Symbols().GetSymbol(identifier).type).Symbols();
-}
-
-const SymbolTable& FunctionCall::SymbolsOfType() const {
-    return GetGlobal().GetObject(Symbols().GetSymbol(identifier).type).Symbols();
-}
-
-ChainedOperation::ChainedOperation(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+ChainedOperation::ChainedOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     if (DotOperation::MatchToken(token)) {
-        operation.emplace<DotOperation>(identifier, this, token, shift);
+        operation.emplace<DotOperation>(scope, identifier, this, token, shift);
     } else if (IndexOperation::MatchToken(token)) {
-        operation.emplace<IndexOperation>(identifier, this, token, shift);
+        operation.emplace<IndexOperation>(scope, identifier, this, token, shift);
     } else if (VariableAssign::MatchToken(token)) {
         operation.emplace<VariableAssign>(identifier, this, token, shift);
     } else if (FunctionCall::MatchToken(token)) {
-        operation.emplace<FunctionCall>(identifier, this, token, shift);
+        operation.emplace<FunctionCall>(scope, identifier, this, token, shift);
     } else {
         throw ParseException(token, ExpectedToken());
     }
@@ -552,25 +532,17 @@ void ChainedOperation::Print(std::ostream& os, size_t depth) const {
     );
 }
 
-VarID ChainedOperation::ReturnType() const {
+VarID ChainedOperation::ReturnType(const SymbolTable* scope) const {
     return std::visit(
         Visitor{
             [&](const auto&) -> VarID { throw InterpreterException("Unknown operation.", line); },
-            [&](const DotOperation& arg) { return arg.ReturnType(); },
-            [&](const IndexOperation& arg) { return arg.ReturnType(); },
-            [&](const VariableAssign& arg) { return arg.ReturnType(); },
-            [&](const FunctionCall& arg) { return arg.ReturnType(); },
+            [&](const DotOperation& arg) { return arg.ReturnType(scope); },
+            [&](const IndexOperation& arg) { return arg.ReturnType(scope); },
+            [&](const VariableAssign& arg) { return arg.ReturnType(scope); },
+            [&](const FunctionCall& arg) { return arg.ReturnType(scope); },
         },
         operation
     );
-}
-
-SymbolTable& ChainedOperation::SymbolsOfType() {
-    return parent->SymbolsOfType();
-}
-
-const SymbolTable& ChainedOperation::SymbolsOfType() const {
-    return parent->SymbolsOfType();
 }
 
 Expression::Expression(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -627,21 +599,21 @@ void Expression::Print(std::ostream& os, size_t depth) const {
     );
 }
 
-VarID Expression::ReturnType() const {
+VarID Expression::ReturnType(const SymbolTable* scope) const {
     return std::visit(
         Visitor{
             [&](const auto&) -> VarID { throw InterpreterException("Unknown operation.", line); },
-            [&](const UnaryOperation& arg) { return arg.ReturnType(); },
-            [&](const BinaryOperation& arg) { return arg.ReturnType(); },
-            [&](const VariableRef& arg) { return arg.ReturnType(); },
-            [&](const FunctionCall& arg) { return arg.ReturnType(); },
-            [&](const VariableAssign& arg) { return arg.ReturnType(); },
+            [&](const UnaryOperation& arg) { return arg.ReturnType(scope); },
+            [&](const BinaryOperation& arg) { return arg.ReturnType(scope); },
+            [&](const VariableRef& arg) { return arg.ReturnType(scope); },
+            [&](const FunctionCall& arg) { return arg.ReturnType(scope); },
+            [&](const VariableAssign& arg) { return arg.ReturnType(scope); },
             [&](bool) { return Symbols().GetSymbol("bool").id; },
             [&](double) { return Symbols().GetSymbol("number").id; },
             [&](const std::string&) { return Symbols().GetSymbol("string").id; },
-            [&](const VariableDef& arg) { return arg.ReturnType(); },
-            [&](const ObjectInitializer& arg) { return arg.ReturnType(); },
-            [&](const ArrayInitializer& arg) { return arg.ReturnType(); },
+            [&](const VariableDef& arg) { return arg.ReturnType(scope); },
+            [&](const ObjectInitializer& arg) { return arg.ReturnType(scope); },
+            [&](const ArrayInitializer& arg) { return arg.ReturnType(scope); },
         },
         expression
     );
@@ -671,6 +643,7 @@ WhileExpr::WhileExpr(Node* parent, const Token& token, const std::function<void(
 
     condition = std::make_unique<Expression>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void WhileExpr::Print(std::ostream& os, size_t depth) const {
@@ -683,8 +656,8 @@ void WhileExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID WhileExpr::ReturnType() const {
-    return block->ReturnType();
+VarID WhileExpr::ReturnType(const SymbolTable* scope) const {
+    return block->ReturnType(scope);
 }
 
 Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -693,6 +666,7 @@ Else::Else(Node* parent, const Token& token, const std::function<void()>& shift)
     shift();
 
     block = std::make_unique<Block>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void Else::Print(std::ostream& os, size_t depth) const {
@@ -702,8 +676,8 @@ void Else::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID Else::ReturnType() const {
-    return block->ReturnType();
+VarID Else::ReturnType(const SymbolTable* scope) const {
+    return block->ReturnType(scope);
 }
 
 Elseif::Elseif(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -713,6 +687,7 @@ Elseif::Elseif(Node* parent, const Token& token, const std::function<void()>& sh
 
     condition = std::make_unique<Expression>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void Elseif::Print(std::ostream& os, size_t depth) const {
@@ -725,8 +700,8 @@ void Elseif::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID Elseif::ReturnType() const {
-    return block->ReturnType();
+VarID Elseif::ReturnType(const SymbolTable* scope) const {
+    return block->ReturnType(scope);
 }
 
 If::If(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -736,6 +711,7 @@ If::If(Node* parent, const Token& token, const std::function<void()>& shift)
 
     condition = std::make_unique<Expression>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void If::Print(std::ostream& os, size_t depth) const {
@@ -748,8 +724,8 @@ void If::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID If::ReturnType() const {
-    return block->ReturnType();
+VarID If::ReturnType(const SymbolTable* scope) const {
+    return block->ReturnType(scope);
 }
 
 IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -762,6 +738,7 @@ IfExpr::IfExpr(Node* parent, const Token& token, const std::function<void()>& sh
         elseifStatements.emplace_back(this, token, shift);
     }
     elseStatement = std::make_unique<Else>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void IfExpr::Print(std::ostream& os, size_t depth) const {
@@ -772,23 +749,23 @@ void IfExpr::Print(std::ostream& os, size_t depth) const {
     elseStatement ? elseStatement->Print(os, depth) : void();
 }
 
-VarID IfExpr::ReturnType() const {
+VarID IfExpr::ReturnType(const SymbolTable* scope) const {
     VarID returnType = 0;
 
-    returnType = ifStatement->block->ReturnType();
+    returnType = ifStatement->block->ReturnType(scope);
     if (returnType != 0) {
         return returnType;
     }
 
     for (const auto& elsif : elseifStatements) {
-        returnType = elsif.block->ReturnType();
+        returnType = elsif.block->ReturnType(scope);
         if (returnType != 0) {
             return returnType;
         }
     }
 
     if (elseStatement) {
-        returnType = elseStatement->block->ReturnType();
+        returnType = elseStatement->block->ReturnType(scope);
         if (returnType != 0) {
             return returnType;
         }
@@ -812,6 +789,7 @@ ForExpr::ForExpr(Node* parent, const Token& token, const std::function<void()>& 
 
     range = std::make_unique<Range>(this, token, shift);
     block = std::make_unique<Block>(this, token, shift);
+    Logger::Created(*this);
 }
 
 void ForExpr::Print(std::ostream& os, size_t depth) const {
@@ -827,8 +805,8 @@ void ForExpr::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID ForExpr::ReturnType() const {
-    return block->ReturnType();
+VarID ForExpr::ReturnType(const SymbolTable* scope) const {
+    return block->ReturnType(scope);
 }
 
 Return::Return(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -842,6 +820,7 @@ Return::Return(Node* parent, const Token& token, const std::function<void()>& sh
 
     lSemicolon::RequireToken(token);
     shift();
+    Logger::Created(*this);
 }
 
 void Return::Print(std::ostream& os, size_t depth) const {
@@ -850,8 +829,8 @@ void Return::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID Return::ReturnType() const {
-    return value ? value->ReturnType() : Symbols().GetSymbol("void").id;
+VarID Return::ReturnType(const SymbolTable* scope) const {
+    return value ? value->ReturnType(scope) : Symbols().GetSymbol("void").id;
 }
 
 Statement::Statement(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -888,14 +867,14 @@ void Statement::Print(std::ostream& os, size_t depth) const {
     );
 }
 
-VarID Statement::ReturnType() const {
+VarID Statement::ReturnType(const SymbolTable* scope) const {
     return std::visit(
         Visitor{
             [&](const auto&) -> VarID { throw InterpreterException("Unknown operation.", line); },
-            [&](const Return& arg) { return arg.ReturnType(); },
-            [&](const ForExpr& arg) { return arg.ReturnType(); },
-            [&](const IfExpr& arg) { return arg.ReturnType(); },
-            [&](const WhileExpr& arg) { return arg.ReturnType(); },
+            [&](const Return& arg) { return arg.ReturnType(scope); },
+            [&](const ForExpr& arg) { return arg.ReturnType(scope); },
+            [&](const IfExpr& arg) { return arg.ReturnType(scope); },
+            [&](const WhileExpr& arg) { return arg.ReturnType(scope); },
             [&](const Expression&) { return 0u; },
         },
         expression
@@ -979,7 +958,7 @@ void Block::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID Block::ReturnType() const {
+VarID Block::ReturnType(const SymbolTable* scope) const {
     return returnType;
 }
 
@@ -1019,6 +998,7 @@ FunctionDef::FunctionDef(Node* parent, const std::string& signature, ExtFunction
     } else {
         Symbols().SetSymbol(name, Symbols().GetSymbol("any").id, true, false);
     }
+    Logger::Created(*this);
 }
 
 FunctionDef::FunctionDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -1066,8 +1046,8 @@ void FunctionDef::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "}\n";
 }
 
-VarID FunctionDef::ReturnType() const {
-    return Symbols().GetSymbol(name).type;
+VarID FunctionDef::ReturnType(const SymbolTable* scope) const {
+    return (scope ? *scope : Symbols()).GetSymbol(name).type;
 }
 
 ObjectDef::ObjectDef(Node* parent, const Token& token, const std::function<void()>& shift)
@@ -1091,6 +1071,7 @@ ObjectDef::ObjectDef(Node* parent, const Token& token, const std::function<void(
 
     lCurlyClose::RequireToken(token);
     shift();
+    Logger::Created(*this);
 }
 
 void ObjectDef::Print(std::ostream& os, size_t depth) const {
