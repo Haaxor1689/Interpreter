@@ -167,4 +167,11 @@ TEST_CASE("Dot operator chaining evaluation") {
     CHECK(ToString(p.Evaluate("foo", { "Hello"s })) == "{ a: { value: \"Hello\", }, b: { value: \"HelloWorld\", }, }");
 }
 
+TEST_CASE("Index operator object access") {
+    Parser p("examples/evaluator/IndexOperator.ct");
+    INFO(p.Tree());
+
+    CHECK(ToString(p.Evaluate("foo", { "a"s })) == "{ a: { value: \"a\", }, b: { value: \"aWorld\", }, }");
+}
+
 } // namespace EvaluatorTests

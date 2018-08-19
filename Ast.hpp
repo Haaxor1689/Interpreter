@@ -71,7 +71,7 @@ public:
     virtual void SetType(VarID type) { parent->SetType(type); };
     virtual SymbolTable& Symbols() { return parent->Symbols(); }
     virtual const SymbolTable& Symbols() const { return parent->Symbols(); }
-    const SymbolTable& SymbolsOfType(const SymbolTable& scope, VarID identifier) const;
+    const SymbolTable& SymbolsOfType(const SymbolTable& scope, const VarRef& identifier) const;
 
     std::string Indent(size_t depth) const {
         std::string ret;
@@ -103,22 +103,23 @@ public:
 };
 
 struct IndexOperation : public Node, public Rule<lSquareOpen, Expression, lSquareClose> {
+    VarRef identifier;
     std::unique_ptr<Expression> index;
     std::unique_ptr<ChainedOperation> chainedOperation;
 
-    IndexOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    IndexOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     void SetType(VarID type) override;
 };
 
 struct DotOperation : public Node, public Rule<lDot, lIdentifier> {
-    VarID identifier;
-    VarID attribute;
+    VarRef identifier;
+    VarRef attribute;
     std::unique_ptr<ChainedOperation> chainedOperation;
     const SymbolTable& scope;
 
-    DotOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    DotOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
     void SetType(VarID type) override;
@@ -156,10 +157,10 @@ struct BinaryOperation : public Node, public Rule<lBinaryOperator, lParenOpen, E
 };
 
 struct VariableAssign : public Node, public Rule<lBinaryOperator, Expression> {
-    VarID identifier;
+    VarRef identifier;
     std::unique_ptr<Expression> value;
 
-    VariableAssign(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    VariableAssign(const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
@@ -211,11 +212,11 @@ struct Arguments : public Node, public Rule<lParenOpen, List<Rule<VariableDef, l
 };
 
 struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression, lComma>>, lParenClose> {
-    VarID identifier;
+    VarRef identifier;
     std::list<Expression> arguments;
     std::unique_ptr<ChainedOperation> chainedOperation;
 
-    FunctionCall(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    FunctionCall(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
@@ -223,7 +224,7 @@ struct FunctionCall : public Node, public Rule<lParenOpen, List<Rule<Expression,
 struct ChainedOperation : public Node, public RuleGroup<DotOperation, IndexOperation, VariableAssign, FunctionCall> {
     std::variant<std::monostate, DotOperation, IndexOperation, VariableAssign, FunctionCall> operation;
 
-    ChainedOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift);
+    ChainedOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override;
 };
@@ -380,15 +381,14 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
     void Print(std::ostream& os, size_t depth) const override;
     VarID ReturnType(const SymbolTable* scope = nullptr) const override { return 0; }
 
-    FunctionDef& GetFunction(const std::string& name) {
-        return GetFunction(symbols[name].id);
-    }
-
-    const FunctionDef& GetFunction(const std::string& name) const {
-        return GetFunction(symbols[name].id);
-    }
-
-    FunctionDef& GetFunction(VarID funcId) {
+    FunctionDef& GetFunction(const VarRef& funcRef) {
+        VarID funcId = std::visit(
+            Visitor{
+                [&](VarID arg) { return arg; },
+                [&](const std::string& arg) { return symbols[arg].id; }
+            },
+            funcRef
+        );
         auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
             return std::visit(
                 Visitor{
@@ -405,19 +405,18 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
         return std::get<FunctionDef>(*it);
     }
 
-    const FunctionDef& GetFunction(VarID funcId) const {
-        return const_cast<Global*>(this)->GetFunction(funcId);
+    const FunctionDef& GetFunction(const VarRef& funcRef) const {
+        return const_cast<Global*>(this)->GetFunction(funcRef);
     }
 
-    const ObjectDef& GetObject(const std::string& name) const {
-        return GetObject(symbols[name].id);
-    }
-
-    ObjectDef& GetObject(const std::string& name) {
-        return GetObject(symbols[name].id);
-    }
-
-    ObjectDef& GetObject(VarID objId) {
+    ObjectDef& GetObject(const VarRef& objRef) {
+        VarID objId = std::visit(
+            Visitor{
+                [&](VarID arg) { return arg; },
+                [&](const std::string& arg) { return symbols[arg].id; }
+            },
+            objRef
+        );
         auto it = std::find_if(definitions.begin(), definitions.end(), [&](const auto& val) {
             return std::visit(
                 Visitor{
@@ -434,8 +433,8 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
         return std::get<ObjectDef>(*it);
     }
 
-    const ObjectDef& GetObject(VarID objId) const {
-        return const_cast<Global*>(this)->GetObject(objId);
+    const ObjectDef& GetObject(const VarRef& objRef) const {
+        return const_cast<Global*>(this)->GetObject(objRef);
     }
 };
 

@@ -47,22 +47,26 @@ public:
         return local.find(key) != local.end() || (parent != nullptr && parent->Contains(key));
     }
 
-    const Symbol& operator[](const std::string& key) const {
-        auto it = local.find(key);
+    const Symbol& operator[](const VarRef& ref) const {
+        auto it = std::visit(
+            Visitor{
+                [&](VarID arg) { return std::find_if(local.begin(), local.end(), [arg](const auto& e) { return e.second.id == arg; }); },
+                [&](const std::string& arg) { return local.find(arg); },
+            },
+            ref
+        );
         if (it != local.end())
             return it->second;
         if (parent != nullptr)
-            return (*parent)[key];
-        throw UndefinedIdentifierException(key);
-    }
+            return (*parent)[ref];
 
-    const Symbol& operator[](VarID id) const {
-        auto it = std::find_if(local.begin(), local.end(), [id](const auto& e) { return e.second.id == id; });
-        if (it != local.end())
-            return it->second;
-        if (parent != nullptr)
-            return (*parent)[id];
-        throw UndefinedIdentifierNameException(id);
+        std::visit(
+            Visitor{
+                [ref](VarID arg) { throw UndefinedIdentifierNameException(arg); },
+                [ref](const std::string& arg) { throw UndefinedIdentifierException(arg); },
+            },
+            ref
+        );
     }
 
     void Set(VarID id, VarID type, bool isFunction, bool isArray) {

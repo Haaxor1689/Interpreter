@@ -6,8 +6,11 @@
 
 namespace Interpreter {
 
-const SymbolTable& Node::SymbolsOfType(const SymbolTable& scope, VarID identifier) const {
-    const auto symbol = scope[identifier];
+const SymbolTable& Node::SymbolsOfType(const SymbolTable& scope, const VarRef& identifier) const {
+    if (std::holds_alternative<std::string>(identifier) && !scope.Contains(std::get<std::string>(identifier))) {
+        return scope;
+    }
+    const Symbol& symbol = scope[identifier];
     if (symbol.isFunction || symbol.type <= 5) {
         return scope;
     }
@@ -30,8 +33,8 @@ const Global& Node::GetGlobal() const {
     return *dynamic_cast<const Global*>(actual);
 }
 
-IndexOperation::IndexOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
-    : Node(parent, token.line) {
+IndexOperation::IndexOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+    : Node(parent, token.line), identifier(identifier) {
     lSquareOpen::RequireToken(token);
     shift();
 
@@ -49,21 +52,30 @@ IndexOperation::IndexOperation(const SymbolTable& scope, VarID identifier, Node*
 void IndexOperation::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "\"Index\": {\n";
     index->Print(os, depth + 1);
+    if (chainedOperation) {
+        chainedOperation->Print(os, depth + 1);
+    }
     os << Indent(depth) << "},\n";
 }
 
-VarID IndexOperation::ReturnType(const SymbolTable* scope) const {
+VarID IndexOperation::ReturnType(const SymbolTable*) const {
     return Symbols()["any"].id;
 }
 
-void IndexOperation::SetType(VarID type) { }
+void IndexOperation::SetType(VarID) { }
 
-DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+DotOperation::DotOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), scope(scope), identifier(identifier) {
     lDot::RequireToken(token);
     shift();
 
-    attribute = scope[token.text].id;
+    attribute = std::visit(
+        Visitor{
+            [&](VarID arg) { return arg != Symbols()["any"].id ? VarRef(scope[token.text].id) : VarRef(token.text); },
+            [&](const std::string& arg) { return scope.Contains(token.text) ? VarRef(scope[token.text].id) : VarRef(token.text); },
+        },
+        identifier
+    );
     shift();
 
     if (ChainedOperation::MatchToken(token)) {
@@ -74,7 +86,14 @@ DotOperation::DotOperation(const SymbolTable& scope, VarID identifier, Node* par
 
 void DotOperation::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "\"Dot\": {\n";
-    os << Indent(depth + 1) << "\"Attribute\": " << scope[attribute] << ",\n";
+    if (std::holds_alternative<VarID>(identifier) && std::get<VarID>(identifier) == Symbols()["any"].id) {
+        os << Indent(depth + 1) << "\"Attribute\": " << std::get<std::string>(attribute) << ",\n";
+    } else {
+        os << Indent(depth + 1) << "\"Attribute\": " << scope[attribute] << ",\n";
+    }
+    if (chainedOperation) {
+        chainedOperation->Print(os, depth + 1);
+    }
     os << Indent(depth) << "},\n";
 }
 
@@ -84,6 +103,9 @@ VarID DotOperation::ReturnType(const SymbolTable* scope) const {
 }
 
 void DotOperation::SetType(VarID type) {
+    if (std::holds_alternative<VarID>(identifier) && std::get<VarID>(identifier) == Symbols()["any"].id) {
+        return;
+    }
     CheckType(scope[attribute].type, type);
 }
 
@@ -195,7 +217,7 @@ VarID BinaryOperation::ReturnType(const SymbolTable* scope) const {
     return returnType;
 }
 
-VariableAssign::VariableAssign(VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+VariableAssign::VariableAssign(const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), identifier(identifier) {
     lBinaryOperator::RequireToken(token);
     shift();
@@ -447,7 +469,7 @@ void Arguments::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "],\n";
 }
 
-FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+FunctionCall::FunctionCall(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line), identifier(identifier) {
     lParenOpen::RequireToken(token);
     shift();
@@ -471,30 +493,33 @@ FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* par
         chainedOperation = std::make_unique<ChainedOperation>(scope, scope[identifier].type, this, token, shift);
     }
 
-    // Signature check
-    auto node = parent;
-    FunctionDef* func = nullptr;
-    while (node->parent != nullptr) {
-        func = dynamic_cast<FunctionDef*>(node);
-        if (func != nullptr && func->name == identifier) {
-            break;
+    if (std::holds_alternative<VarID>(identifier)) {
+        VarID id = std::get<VarID>(identifier);
+        // Signature check
+        auto node = parent;
+        FunctionDef* func = nullptr;
+        while (node->parent != nullptr) {
+            func = dynamic_cast<FunctionDef*>(node);
+            if (func != nullptr && func->name == id) {
+                break;
+            }
+            func = nullptr;
+            node = node->parent;
         }
-        func = nullptr;
-        node = node->parent;
-    }
-    const FunctionDef& functionDef = func == nullptr ? dynamic_cast<Global*>(node)->GetFunction(identifier) : *func;
-    if (arguments.size() != functionDef.arguments->arguments.size()) {
-            throw TypeMismatchException(std::to_string(arguments.size()) + " arg(s)", std::to_string(functionDef.arguments->arguments.size()) + " arg(s)", line);
-    }
+        const FunctionDef& functionDef = func == nullptr ? dynamic_cast<Global*>(node)->GetFunction(id) : *func;
+        if (arguments.size() != functionDef.arguments->arguments.size()) {
+                throw TypeMismatchException(std::to_string(arguments.size()) + " arg(s)", std::to_string(functionDef.arguments->arguments.size()) + " arg(s)", line);
+        }
 
-    auto anyType = Symbols()["any"].id;
-    auto inIt = arguments.begin();
-    auto argIt = functionDef.arguments->arguments.begin();
-    for (; inIt != arguments.end(); ++inIt, ++argIt) {
-        auto inType = inIt->ReturnType();
-        auto argType = argIt->ReturnType();
-        if (inType != anyType && argType != anyType && inType != argType) {
-            throw TypeMismatchException(ToString(functionDef.Symbols()[argType]), ToString(Symbols()[inType]), line);
+        auto anyType = Symbols()["any"].id;
+        auto inIt = arguments.begin();
+        auto argIt = functionDef.arguments->arguments.begin();
+        for (; inIt != arguments.end(); ++inIt, ++argIt) {
+            auto inType = inIt->ReturnType();
+            auto argType = argIt->ReturnType();
+            if (inType != anyType && argType != anyType && inType != argType) {
+                throw TypeMismatchException(ToString(functionDef.Symbols()[argType]), ToString(Symbols()[inType]), line);
+            }
         }
     }
     Logger::Created(*this);
@@ -503,9 +528,13 @@ FunctionCall::FunctionCall(const SymbolTable& scope, VarID identifier, Node* par
 void FunctionCall::Print(std::ostream& os, size_t depth) const {
     os << Indent(depth) << "\"Call\": {\n";
     os << Indent(depth + 1) << "\"Arguments\": {\n";
-    for (const auto& arg : arguments)
+    for (const auto& arg : arguments) {
         arg.Print(os, depth + 2);
+    }
     os << Indent(depth + 1) << "},\n";
+    if (chainedOperation) {
+        chainedOperation->Print(os, depth + 1);
+    }
     os << Indent(depth) << "},\n";
 }
 
@@ -513,7 +542,7 @@ VarID FunctionCall::ReturnType(const SymbolTable* scope) const {
     return chainedOperation ? chainedOperation->ReturnType(scope) : (scope ? *scope : Symbols())[identifier].type;
 }
 
-ChainedOperation::ChainedOperation(const SymbolTable& scope, VarID identifier, Node* parent, const Token& token, const std::function<void()>& shift)
+ChainedOperation::ChainedOperation(const SymbolTable& scope, const VarRef& identifier, Node* parent, const Token& token, const std::function<void()>& shift)
     : Node(parent, token.line) {
     if (DotOperation::MatchToken(token)) {
         operation.emplace<DotOperation>(scope, identifier, this, token, shift);

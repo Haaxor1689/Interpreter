@@ -226,7 +226,8 @@ private:
         try {
             auto& value = GetValue(node.name);
             if (node.chainedOperation) {
-                return Evaluate(*node.chainedOperation, &value);
+                auto chainedValue = Evaluate(*node.chainedOperation, &value);
+                return chainedValue;
             }
             return value;
         } catch (const InternalException& err) {
@@ -235,11 +236,21 @@ private:
     }
 
     Value Evaluate(const DotOperation& node, Value* value) {
-        if (node.scope[node.attribute].isFunction) {
+        if (!std::holds_alternative<std::string>(node.attribute) && node.scope[node.attribute].isFunction) {
             return Evaluate(*node.chainedOperation, nullptr);
         }
         try {
-            auto& localValue = std::get<Object>(*value).values[node.scope[node.attribute].name];
+            if (!std::holds_alternative<Object>(*value)) {
+                throw InterpreterException("Can't call an dot operator on non object type " + ToString(node.Symbols()[node.identifier]) + ".", node.line);
+            }
+            std::string key = std::visit(
+                Visitor{
+                    [&](VarID arg) { return node.scope[node.attribute].name; },
+                    [&](const std::string& arg) { return arg; }
+                },
+                node.attribute
+            );
+            auto& localValue = std::get<Object>(*value).values[key];
             if (node.chainedOperation) {
                 return Evaluate(*node.chainedOperation, &localValue);
             }
@@ -250,7 +261,27 @@ private:
     }
 
     Value Evaluate(const IndexOperation& node, Value* value) {
-        throw InterpreterException("Not implemented.", node.line);
+        try {
+            auto indexExpression = Evaluate(*node.index);
+            if (!std::holds_alternative<Object>(*value)) {
+                throw InterpreterException("Can't call an index operator on non object type " + ToString(node.Symbols()[node.identifier]) + ".", node.line);
+            }
+            Object& object = std::get<Object>(*value);
+            if (!std::holds_alternative<std::string>(indexExpression)) {
+                throw InterpreterException("Can't call an index operator with non string type.", node.line);
+            }
+            std::string index = std::get<std::string>(indexExpression);
+            if (object.values.find(index) == object.values.end()) {
+                throw InterpreterException("Object of type " + ToString(node.Symbols()[node.identifier]) + " does not containt key " + index + ".", node.line);
+            }
+            auto& localValue = object.values[index];
+            if (node.chainedOperation) {
+                return Evaluate(*node.chainedOperation, &localValue);
+            }
+            return localValue;
+        } catch (const InternalException& err) {
+            throw InterpreterException(err.what(), node.line);
+        }
     }
 
     Value Evaluate(const VariableAssign& node, Value* value) {

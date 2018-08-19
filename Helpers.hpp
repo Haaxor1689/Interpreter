@@ -18,6 +18,7 @@ Visitor(Ts...)->Visitor<Ts...>;
 struct Object;
 struct Array;
 using VarID = unsigned;
+using VarRef = std::variant<VarID, std::string>;
 using Value = std::variant<std::monostate, bool, double, std::string, Object, Array>;
 
 struct Object {
