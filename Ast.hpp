@@ -290,6 +290,7 @@ struct IfExpr : public Node, public Rule<If, List<Elseif>, Else> {
     std::unique_ptr<If> ifStatement;
     std::list<Elseif> elseifStatements;
     std::unique_ptr<Else> elseStatement;
+    VarID returnType;
 
     IfExpr(Node* parent, const Token& token, const std::function<void()>& shift);
     void Print(std::ostream& os, size_t depth) const override;
@@ -399,7 +400,7 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
             );
         });
         if (it == definitions.end()) {
-            throw UndefinedIdentifierNameException(funcId);
+            throw UndefinedIdentifierException(funcId);
         }
 
         return std::get<FunctionDef>(*it);
@@ -427,7 +428,7 @@ struct Global : public Node, public Rule<List<RuleGroup<FunctionDef, ObjectDef>>
             );
         });
         if (it == definitions.end()) {
-            throw UndefinedIdentifierNameException(objId);
+            throw UndefinedIdentifierException(objId);
         }
 
         return std::get<ObjectDef>(*it);

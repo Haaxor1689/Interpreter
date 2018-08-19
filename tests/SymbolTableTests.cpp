@@ -23,12 +23,12 @@ TEST_CASE("Function names") {
 }
 
 TEST_CASE("Undefined symbol exception") {
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedFunc.ct"), "Found undefined identifier a.");
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowForLoopIdentifierOutside.ct"), "Found undefined identifier a.");
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "Found undefined identifier a.");
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "Found undefined identifier a.");
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowOnRedefinition.ct"), "Tried to redefine identifier a.");
-    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedObjectAttribute.ct"), "Found undefined identifier b.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedFunc.ct"), "An exception occured on line 6. Message: Found undefined identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowForLoopIdentifierOutside.ct"), "An exception occured on line 8. Message: Found undefined identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowSymbolFromAnotherBlock.ct"), "An exception occured on line 6. Message: Found undefined identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUseBeforeDeclaration.ct"), "An exception occured on line 6. Message: Found undefined identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowOnRedefinition.ct"), "An exception occured on line 4. Message: Tried to redefine identifier a.");
+    CHECK_THROWS_WITH(TryCreateParser("symbols/ThrowUndefinedObjectAttribute.ct"), "An exception occured on line 5. Message: Found undefined identifier b.");
 }
 
 } // namespace SymbolTableTests

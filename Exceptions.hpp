@@ -58,17 +58,8 @@ private:
 struct UndefinedIdentifierException : public std::exception {
     UndefinedIdentifierException(const std::string& identifier)
         : message("Found undefined identifier " + identifier + ".") {}
-
-    char const* what() const noexcept override {
-        return message.c_str();
-    }
-
-private:
-    std::string message;
-};
-
-struct UndefinedIdentifierNameException : public std::exception {
-    UndefinedIdentifierNameException(unsigned identifier)
+    
+    UndefinedIdentifierException(unsigned identifier)
         : message("Tried to access undefined identifier with id " + std::to_string(identifier) + ".") {}
 
     char const* what() const noexcept override {

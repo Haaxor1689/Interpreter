@@ -1,15 +1,24 @@
-object Tst {
-	var a: string;
-	var b: number;
-	var c;
-}
-
-func Main(var first): number {
-	var a: number = first;
-	var obj = new Tst {
-		a = "a",
-		b = 1,
-		c = true,
-	};
-	return a;
+func EvaluateGrid(var player: string, var grid: Grid): bool {
+	if ==(grid.X.A, player) {
+		if ==(grid.Y.A, player) {
+			return ==(grid.Z.A, player);
+		} elseif ==(grid.Y.B, player) {
+			return ==(grid.Z.C, player);
+		} elseif ==(grid.X.B, player) {
+			return ==(grid.X.C, player);
+		}
+	} elseif ==(grid.X.B, player) {
+		return &&(==(grid.Y.B, player), ==(grid.Z.B, player));
+	} elseif ==(grid.X.X, player) {
+		if ==(grid.Y.B, player) {
+			return ==(grid.Z.A, player);
+		} elseif ==(grid.Y.C, player) {
+			return ==(grid.Z.C, player);
+		}
+	} elseif ==(grid.Y.A, player) {
+		return &&(==(grid.Y.B, player), ==(grid.Y.C, player));
+	} elseif ==(grid.Z.A, player) {
+		return &&(==(grid.Z.B, player), ==(grid.Z.C, player));
+	}
+	return false;
 }

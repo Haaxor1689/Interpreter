@@ -24,7 +24,7 @@ TEST_CASE("Function return") {
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongReturn.ct"),
         "Type mismatch error on line 1 caused by wrong return type. Expected \"5:number\" got \"3:bool\".");
     CHECK_THROWS_WITH(TryCreateParser("typecheck/WrongMultipleReturn.ct"),
-        "Type mismatch error on line 2 caused by wrong return type. Expected \"2:void\" got \"5:number\".");
+        "Type mismatch error on line 5 caused by wrong return type. Expected \"5:number\" got \"4:string\".");
 }
 
 TEST_CASE("AnyType") {

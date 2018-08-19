@@ -133,22 +133,25 @@ private:
     }
 
     Value Evaluate(const WhileExpr& node) {
-        auto whileEval = Evaluator(this, root);
+        std::unique_ptr<Evaluator> whileEval;
         if (node.isDoWhile) {
             do {
-                auto value = whileEval.Evaluate(*node.block);
-                if (whileEval.didHitReturn) {
+                whileEval = std::move(std::unique_ptr<Evaluator>(new Evaluator(this, root)));
+                auto value = whileEval->Evaluate(*node.block);
+                if (whileEval->didHitReturn) {
                     didHitReturn = true;
                     return value;
                 }
-            } while (std::get<bool>(whileEval.Evaluate(*node.condition)));
+            } while (std::get<bool>(whileEval->Evaluate(*node.condition)));
         } else {
-            while (std::get<bool>(whileEval.Evaluate(*node.condition))) {
-                auto value = whileEval.Evaluate(*node.block);
-                if (whileEval.didHitReturn) {
+            whileEval = std::move(std::unique_ptr<Evaluator>(new Evaluator(this, root)));
+            while (std::get<bool>(whileEval->Evaluate(*node.condition))) {
+                auto value = whileEval->Evaluate(*node.block);
+                if (whileEval->didHitReturn) {
                     didHitReturn = true;
                     return value;
                 }
+                whileEval = std::move(std::unique_ptr<Evaluator>(new Evaluator(this, root)));
             }
         }
 

@@ -62,7 +62,7 @@ public:
 
         std::visit(
             Visitor{
-                [ref](VarID arg) { throw UndefinedIdentifierNameException(arg); },
+                [ref](VarID arg) { throw UndefinedIdentifierException(arg); },
                 [ref](const std::string& arg) { throw UndefinedIdentifierException(arg); },
             },
             ref
@@ -81,7 +81,7 @@ public:
             parent->Set(id, type, isFunction, isArray);
             return;
         }
-        throw UndefinedIdentifierNameException(id);
+        throw UndefinedIdentifierException(id);
     }
 
     VarID NextID() {

@@ -1,9 +1,9 @@
 func IsValidColumn(var column: string): bool {
-	return ||(==(column, "X"), ||(==(column, "Y"), ==(column, "Z")));
+	return ||(==(column, "A"), ||(==(column, "B"), ==(column, "C")));
 }
 
 func IsValidRow(var row: string): bool {
-	return ||(==(row, "A"), ||(==(row, "B"), ==(row, "C")));
+	return ||(==(row, "X"), ||(==(row, "Y"), ==(row, "Z")));
 }
 
 object Column {
@@ -19,50 +19,98 @@ object Grid {
 }
 
 func PrintGrid(var grid: Grid): void {
-	WriteLine(" |A|B|C|");
-	WriteLine("--------");
-	for var i in 0 ... 2 {
-		Write(i);
-		for var j in [ "A", "B", "C", ] {
-			Write(+("|", grid[i][j]));
+	WriteLine("   | A | B | C |");
+	WriteLine("----------------");
+	Write(" X");
+	Write(+(" | ", grid.X.A));
+	Write(+(" | ", grid.X.B));
+	Write(+(" | ", grid.X.C));
+	WriteLine(" |");
+	WriteLine("----------------");
+	Write(" Y");
+	Write(+(" | ", grid.Y.A));
+	Write(+(" | ", grid.Y.B));
+	Write(+(" | ", grid.Y.C));
+	WriteLine(" | ");
+	WriteLine("----------------");
+	Write(" Z");
+	Write(+(" | ", grid.Z.A));
+	Write(+(" | ", grid.Z.B));
+	Write(+(" | ", grid.Z.C));
+	WriteLine(" |");
+	WriteLine("----------------");
+}
+
+func EvaluateGrid(var player: string, var grid: Grid): bool {
+	if ==(grid.X.A, player) {
+		if ==(grid.Y.A, player) {
+			return ==(grid.Z.A, player);
+		} elseif ==(grid.Y.B, player) {
+			return ==(grid.Z.C, player);
+		} elseif ==(grid.X.B, player) {
+			return ==(grid.X.C, player);
 		}
-		WriteLine("|");
-		WriteLine("--------");
+	} elseif ==(grid.X.B, player) {
+		return &&(==(grid.Y.B, player), ==(grid.Z.B, player));
+	} elseif ==(grid.X.C, player) {
+		if ==(grid.Y.B, player) {
+			return ==(grid.Z.A, player);
+		} elseif ==(grid.Y.C, player) {
+			return ==(grid.Z.C, player);
+		}
+	} elseif ==(grid.Y.A, player) {
+		return &&(==(grid.Y.B, player), ==(grid.Y.C, player));
+	} elseif ==(grid.Z.A, player) {
+		return &&(==(grid.Z.B, player), ==(grid.Z.C, player));
 	}
+	return false;
 }
 
 func Play(): string {
-	var shouldEnd = false;
-
 	var grid: Grid = new Grid{};
 
 	var currentPlayer = "X";
-
-	while !shouldEnd {
+	var turn = 1;
+	var play = true;
+	while play {
 		PrintGrid(grid);
+		Write("Turn ");
+		WriteLine(turn);
 		WriteLine(+("Player ", +(currentPlayer, "'s turn")));
 
 		WriteLine("Select row:");
 		var row = ReadText();
 		if !IsValidRow(row) {
 			WriteLine(+("Invalid row ", row));
-		}
-
-		WriteLine("Select column:");
-		var column = ReadText();
-		if !IsValidColumn(column) {
-			WriteLine(+("Invalid column ", column));
-		}
-
-		if ==(grid[column][row], " ") {
-			grid[column][row] = currentPlayer;
-			if ==(currentPlayer, "X") {
-				currentPlayer = "O";
+			WriteLine("Pick again.");
+		} else {
+			WriteLine("Select column:");
+			var column = ReadText();
+			if !IsValidColumn(column) {
+				WriteLine(+("Invalid column ", column));
+				WriteLine("Pick again.");
 			} else {
-				currentPlayer = "X";
+				if ==(grid[row][column], " ") {
+					grid[row][column] = currentPlayer;
+
+					if EvaluateGrid(currentPlayer, grid) {
+						return +("Player ", +(currentPlayer, " won"));
+					}
+
+					if >=(turn, 9) {
+						return "It's a tie";
+					}
+					turn = +(turn, 1);
+
+					if ==(currentPlayer, "X") {
+						currentPlayer = "O";
+					} else {
+						currentPlayer = "X";
+					}
+				} else {
+					WriteLine("Selected field is already taken. Pick again.");
+				}
 			}
 		}
 	}
-
-	return +("Player ", +(currentPlayer, " won"));
 }
